@@ -182,14 +182,19 @@ class TransformerImageBlock(nn.Module):
         context_row_positions: torch.Tensor | None = None,
         context_col_positions: torch.Tensor | None = None,
         attention_mask: torch.Tensor | None = None,
+        jvp_attention: bool = False,
     ) -> torch.Tensor:
         ln1x = self.ln1(x)
         if self.use_rope_2d:
             if row_positions is None or col_positions is None:
                 raise ValueError("row_positions/col_positions must be provided when use_rope_2d is True")
-            x = x + self.self_attn(ln1x, row_positions, col_positions, attention_mask=attention_mask)
+            x = x + self.self_attn(
+                ln1x, row_positions, col_positions, attention_mask=attention_mask, jvp_attention=jvp_attention
+            )
         else:
-            x = x + self.self_attn(ln1x, token_positions, attention_mask=attention_mask)
+            x = x + self.self_attn(
+                ln1x, token_positions, attention_mask=attention_mask, jvp_attention=jvp_attention
+            )
         ln2x = self.ln2(x)
         if self.use_rope_2d:
             if context_row_positions is None or context_col_positions is None:
@@ -202,6 +207,7 @@ class TransformerImageBlock(nn.Module):
                 context_row_positions,
                 context_col_positions,
                 attention_mask=None,
+                jvp_attention=jvp_attention,
             )
         else:
             x = x + self.cross_attn(
@@ -210,6 +216,7 @@ class TransformerImageBlock(nn.Module):
                 token_positions,
                 context_token_positions,
                 attention_mask=None,
+                jvp_attention=jvp_attention,
             )
         ln3x = self.ln3(x)
         x = x + self.ffn(ln3x)
@@ -498,6 +505,7 @@ class CategoricalFlowImage(nn.Module):
         s: torch.Tensor,
         t: torch.Tensor,
         context: torch.Tensor | None = None,
+        jvp_attention: bool = False,
     ) -> torch.Tensor:
         if x.dim() != 3:
             raise ValueError("x must be 3D with shape (batch, seq, vocab_size)")
@@ -557,6 +565,7 @@ class CategoricalFlowImage(nn.Module):
                 context_row_positions=context_row_positions,
                 context_col_positions=context_col_positions,
                 attention_mask=None,
+                jvp_attention=jvp_attention,
             )
         output_seq = self.ln_final(output_seq)
         return self.output_proj(output_seq)

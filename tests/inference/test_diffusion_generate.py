@@ -167,6 +167,7 @@ def test_categorical_flow_image_generate_cfg_uses_unconditional_context():
         steps=3,
         cfg_scale=0.0,
         temperature=0.0,
+        prior_type="uniform",
     )
     assert torch.all(out_no_cfg == 1)
 
@@ -178,6 +179,7 @@ def test_categorical_flow_image_generate_cfg_uses_unconditional_context():
         steps=3,
         cfg_scale=2.0,
         temperature=0.0,
+        prior_type="uniform",
     )
     assert torch.all(out_cfg == 2)
 
@@ -196,6 +198,7 @@ def test_categorical_flow_image_generate_requires_uncond_context_when_cfg_enable
             steps=2,
             cfg_scale=1.0,
             temperature=0.0,
+            prior_type="uniform",
         )
     except ValueError as exc:
         assert "uncond_context must be set" in str(exc)

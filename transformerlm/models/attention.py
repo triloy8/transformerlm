@@ -99,6 +99,16 @@ def torch_scaled_dot_product_attention(
     return F.scaled_dot_product_attention(Q, K, V, attn_mask=mask, dropout_p=0.0, is_causal=False)
 
 
+def jvp_safe_scaled_dot_product_attention(
+    Q: torch.Tensor,
+    K: torch.Tensor,
+    V: torch.Tensor,
+    attention_mask: torch.Tensor | None = None,
+):
+    # Use the explicit attention formulation so torch.func.jvp can differentiate through it.
+    return scaled_dot_product_attention(Q, K, V, attention_mask=attention_mask)
+
+
 class MultiheadSelfAttentionRoPE(nn.Module):
     def __init__(
         self,
@@ -133,6 +143,7 @@ class MultiheadSelfAttentionRoPE(nn.Module):
         x: torch.Tensor,
         token_positions: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
+        jvp_attention: bool = False,
     ) -> torch.Tensor:
         wqx = self.q_proj(x)
         wqx_rearr = rearrange(wqx, "... seq_len (num_heads d_k) -> ... num_heads seq_len d_k", num_heads=self.num_heads, d_k=self.d_k)
@@ -145,7 +156,14 @@ class MultiheadSelfAttentionRoPE(nn.Module):
         wvx = self.v_proj(x)
         wvx_rearr = rearrange(wvx, "... seq_len (num_heads d_v) -> ... num_heads seq_len d_v", num_heads=self.num_heads, d_v=self.d_v)
 
-        if self.attention_backend == "torch_sdpa":
+        if jvp_attention:
+            attn = jvp_safe_scaled_dot_product_attention(
+                wqx_rearr_rope,
+                wkx_rearr_rope,
+                wvx_rearr,
+                attention_mask=attention_mask,
+            )
+        elif self.attention_backend == "torch_sdpa":
             attn = torch_scaled_dot_product_attention(
                 wqx_rearr_rope,
                 wkx_rearr_rope,
@@ -200,6 +218,7 @@ class MultiheadCrossAttentionRoPE(nn.Module):
         token_positions: torch.Tensor,
         context_token_positions: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
+        jvp_attention: bool = False,
     ) -> torch.Tensor:
         wqx = self.q_proj(x)
         wqx_rearr = rearrange(wqx, "... seq_len (num_heads d_k) -> ... num_heads seq_len d_k", num_heads=self.num_heads, d_k=self.d_k)
@@ -212,7 +231,14 @@ class MultiheadCrossAttentionRoPE(nn.Module):
         wvx = self.v_proj(context)
         wvx_rearr = rearrange(wvx, "... seq_len (num_heads d_v) -> ... num_heads seq_len d_v", num_heads=self.num_heads, d_v=self.d_v)
 
-        if self.attention_backend == "torch_sdpa":
+        if jvp_attention:
+            attn = jvp_safe_scaled_dot_product_attention(
+                wqx_rearr_rope,
+                wkx_rearr_rope,
+                wvx_rearr,
+                attention_mask=attention_mask,
+            )
+        elif self.attention_backend == "torch_sdpa":
             attn = torch_scaled_dot_product_attention(
                 wqx_rearr_rope,
                 wkx_rearr_rope,
@@ -284,6 +310,7 @@ class MultiheadSelfAttentionRoPE2D(nn.Module):
         row_positions: torch.Tensor,
         col_positions: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
+        jvp_attention: bool = False,
     ) -> torch.Tensor:
         wqx = self.q_proj(x)
         wqx_rearr = rearrange(
@@ -311,7 +338,14 @@ class MultiheadSelfAttentionRoPE2D(nn.Module):
             d_v=self.d_v,
         )
 
-        if self.attention_backend == "torch_sdpa":
+        if jvp_attention:
+            attn = jvp_safe_scaled_dot_product_attention(
+                wqx_rearr_rope,
+                wkx_rearr_rope,
+                wvx_rearr,
+                attention_mask=attention_mask,
+            )
+        elif self.attention_backend == "torch_sdpa":
             attn = torch_scaled_dot_product_attention(
                 wqx_rearr_rope,
                 wkx_rearr_rope,
@@ -391,6 +425,7 @@ class MultiheadCrossAttentionRoPE2D(nn.Module):
         context_row_positions: torch.Tensor,
         context_col_positions: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
+        jvp_attention: bool = False,
     ) -> torch.Tensor:
         wqx = self.q_proj(x)
         wqx_rearr = rearrange(
@@ -418,7 +453,14 @@ class MultiheadCrossAttentionRoPE2D(nn.Module):
             d_v=self.d_v,
         )
 
-        if self.attention_backend == "torch_sdpa":
+        if jvp_attention:
+            attn = jvp_safe_scaled_dot_product_attention(
+                wqx_rearr_rope,
+                wkx_rearr_rope,
+                wvx_rearr,
+                attention_mask=attention_mask,
+            )
+        elif self.attention_backend == "torch_sdpa":
             attn = torch_scaled_dot_product_attention(
                 wqx_rearr_rope,
                 wkx_rearr_rope,

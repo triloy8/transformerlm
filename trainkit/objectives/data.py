@@ -48,8 +48,7 @@ class FlowMatchingBatch:
 
 @dataclass
 class CategoricalFlowBatch:
-    x_s: torch.Tensor
-    x_t: torch.Tensor
+    x0_prior: torch.Tensor
     clean_targets: torch.Tensor
     s_timesteps: torch.Tensor
     t_timesteps: torch.Tensor
@@ -507,11 +506,15 @@ def get_categorical_flow_batch(
     device: str,
     *,
     vocab_size: int,
+    prior_type: str = "discunif",
     random_trunc_prob: float = 0.0,
     generator: torch.Generator | None = None,
 ) -> CategoricalFlowBatch:
     if vocab_size <= 1:
         raise ValueError("vocab_size must be > 1 for categorical flow")
+    prior_type = str(prior_type).lower()
+    if prior_type not in {"discunif", "uniform"}:
+        raise ValueError("prior_type must be one of: discunif, uniform")
     clean_targets, attention_mask, random_trunc_applied, labels = _draw_clean_targets(
         dataset,
         batch_size,
@@ -524,12 +527,24 @@ def get_categorical_flow_batch(
     if clean_targets.min().item() < 0 or clean_targets.max().item() >= vocab_size:
         raise ValueError("clean_targets must be in [0, vocab_size)")
 
-    x1 = torch.nn.functional.one_hot(clean_targets, num_classes=vocab_size).to(torch.float32)
-    x0 = torch.full_like(x1, 1.0 / float(vocab_size))
+    if prior_type == "discunif":
+        x0_tokens = torch.randint(
+            low=0,
+            high=vocab_size,
+            size=clean_targets.shape,
+            device=clean_targets.device,
+            generator=generator,
+        )
+        x0 = torch.nn.functional.one_hot(x0_tokens, num_classes=vocab_size).to(torch.float32)
+    else:
+        x0 = torch.full(
+            (*clean_targets.shape, vocab_size),
+            fill_value=1.0 / float(vocab_size),
+            device=clean_targets.device,
+            dtype=torch.float32,
+        )
     t = _rand_uniform((clean_targets.shape[0], 1), device=clean_targets.device, generator=generator)
     s = _rand_uniform((clean_targets.shape[0], 1), device=clean_targets.device, generator=generator) * t
-    x_s = (1.0 - s.unsqueeze(-1)) * x0 + s.unsqueeze(-1) * x1
-    x_t = (1.0 - t.unsqueeze(-1)) * x0 + t.unsqueeze(-1) * x1
 
     loss_mask = attention_mask
     token_count = int(loss_mask.sum().item()) if loss_mask is not None else int(clean_targets.numel())
@@ -549,8 +564,7 @@ def get_categorical_flow_batch(
         },
     }
     return CategoricalFlowBatch(
-        x_s=x_s,
-        x_t=x_t,
+        x0_prior=x0,
         clean_targets=clean_targets,
         s_timesteps=s,
         t_timesteps=t,

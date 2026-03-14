@@ -328,6 +328,7 @@ def infer_image(args, *, logger: Optional[Logger] = None):
             top_p=(None if args.top_p is None else float(args.top_p)),
             cfg_scale=cfg_scale,
             uncond_context=uncond_context,
+            prior_type=str(getattr(args, "prior_type", "discunif")),
             generator=generator,
         )
     else:

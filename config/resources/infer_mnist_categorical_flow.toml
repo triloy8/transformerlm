@@ -33,3 +33,4 @@ cfg_scale = 2.0
 remasking = "random"
 seed = 123
 output_dir = "./runs/infer_images_categorical_flow"
+prior_type = "discunif"

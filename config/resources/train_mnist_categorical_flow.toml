@@ -44,8 +44,11 @@ train_loss_ema_decay = 0.99
 amp_enabled = true
 amp_dtype = "bfloat16"
 objective = "categorical-flow"
+categorical_flow_prior_type = "discunif"
+categorical_flow_diag_fraction = 0.5
 categorical_flow_inf_weight = 1.0
-categorical_flow_ec_weight = 0.5
+categorical_flow_ec_weight = 1.0
+categorical_flow_td_weight = 1.0
 uncond_label_dropout_prob = 0.1
 
 [data]

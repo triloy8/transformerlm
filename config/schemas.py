@@ -276,8 +276,11 @@ class TrainingConfig(_BaseConfig):
     p_mask_override: Optional[float] = None
     deterministic_mask: bool = False
     uncond_label_dropout_prob: float = 0.0
+    categorical_flow_prior_type: str = "discunif"
+    categorical_flow_diag_fraction: float = 0.5
     categorical_flow_inf_weight: float = 1.0
     categorical_flow_ec_weight: float = 1.0
+    categorical_flow_td_weight: float = 1.0
 
     @model_validator(mode="after")
     def _validate_training(self):
@@ -342,10 +345,17 @@ class TrainingConfig(_BaseConfig):
             raise ValueError("p_mask_override must be in (0, 1] when provided")
         if not (0 <= self.uncond_label_dropout_prob <= 1):
             raise ValueError("uncond_label_dropout_prob must be in [0, 1]")
+        self.categorical_flow_prior_type = self.categorical_flow_prior_type.lower()
+        if self.categorical_flow_prior_type not in {"discunif", "uniform"}:
+            raise ValueError("categorical_flow_prior_type must be one of: discunif, uniform")
+        if not (0 <= self.categorical_flow_diag_fraction <= 1):
+            raise ValueError("categorical_flow_diag_fraction must be in [0, 1]")
         if self.categorical_flow_inf_weight < 0:
             raise ValueError("categorical_flow_inf_weight must be >= 0")
         if self.categorical_flow_ec_weight < 0:
             raise ValueError("categorical_flow_ec_weight must be >= 0")
+        if self.categorical_flow_td_weight < 0:
+            raise ValueError("categorical_flow_td_weight must be >= 0")
         return self
 
 
@@ -737,6 +747,7 @@ class ImageInferenceConfig(_BaseConfig):
     seed: Optional[int] = None
     cfg_scale: float = 0.0
     remasking: str = "random"
+    prior_type: str = "discunif"
     output_dir: Path = Path("runs/infer_images")
     image_height: Optional[int] = None
     image_width: Optional[int] = None
@@ -764,6 +775,9 @@ class ImageInferenceConfig(_BaseConfig):
             raise ValueError("cfg_scale must be >= 0")
         if self.remasking not in {"low_confidence", "random"}:
             raise ValueError("remasking must be one of: low_confidence, random")
+        self.prior_type = self.prior_type.lower()
+        if self.prior_type not in {"discunif", "uniform"}:
+            raise ValueError("prior_type must be one of: discunif, uniform")
         if (self.image_height is None) ^ (self.image_width is None):
             raise ValueError("image_height and image_width must be set together")
         if self.image_height is not None and self.image_height <= 0:

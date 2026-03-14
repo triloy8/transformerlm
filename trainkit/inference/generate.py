@@ -414,6 +414,7 @@ def categorical_flow_image_generate(
     top_p: float | None = None,
     cfg_scale: float = 0.0,
     uncond_context: torch.Tensor | None = None,
+    prior_type: str = "discunif",
     generator: torch.Generator | None = None,
 ) -> torch.Tensor:
     if prompt_indices.dim() != 2:
@@ -428,16 +429,29 @@ def categorical_flow_image_generate(
         raise ValueError("steps must be > 0")
     if temperature < 0:
         raise ValueError("temperature must be >= 0")
+    prior_type = str(prior_type).lower()
+    if prior_type not in {"discunif", "uniform"}:
+        raise ValueError("prior_type must be one of: discunif, uniform")
 
     batch_size = context.shape[0]
     gen_length = int(getattr(model, "context_length"))
     vocab_size = int(getattr(model, "vocab_size"))
-    x = torch.full(
-        (batch_size, gen_length, vocab_size),
-        fill_value=1.0 / float(vocab_size),
-        device=prompt_indices.device,
-        dtype=torch.float32,
-    )
+    if prior_type == "discunif":
+        x_tokens = torch.randint(
+            low=0,
+            high=vocab_size,
+            size=(batch_size, gen_length),
+            device=prompt_indices.device,
+            generator=generator,
+        )
+        x = torch.nn.functional.one_hot(x_tokens, num_classes=vocab_size).to(torch.float32)
+    else:
+        x = torch.full(
+            (batch_size, gen_length, vocab_size),
+            fill_value=1.0 / float(vocab_size),
+            device=prompt_indices.device,
+            dtype=torch.float32,
+        )
 
     if uncond_context is not None:
         if uncond_context.dim() != 1:
