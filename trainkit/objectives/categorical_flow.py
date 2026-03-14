@@ -201,9 +201,10 @@ class CategoricalFlowObjective(Objective):
         if count <= 0:
             return None
         targets = batch.clean_targets
+        inputs_list = inputs[:count].argmax(dim=-1).detach().cpu().tolist()
         preds_list = logits[:count].argmax(dim=-1).detach().cpu().tolist()
         targets_list = targets[:count].detach().cpu().tolist()
-        return [{"predictions": preds_list[i], "targets": targets_list[i]} for i in range(count)]
+        return [{"inputs": inputs_list[i], "predictions": preds_list[i], "targets": targets_list[i]} for i in range(count)]
 
     def encode(self, text: str) -> list[int]:
         return self._tokenizer.encode(text)

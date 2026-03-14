@@ -33,7 +33,7 @@ grad_clip_max_l2_norm = 3.0
 lr_schedule = "constant_with_warmup"
 
 [training]
-batch_size = 16
+batch_size = 32
 max_train_iteration = 120000
 max_val_iteration = 10
 val_freq_iteration = 250
@@ -70,8 +70,8 @@ log_activation_norms = false
 log_weight_norms = true
 log_grad_norms = true
 log_p_mask_bucket_loss = false
-val_log_every = 8
-val_log_samples = 1
+val_log_every = 0
+val_log_samples = 0
 
 [wandb]
 entity = "yiltro8-org"

@@ -19,12 +19,12 @@ image_height = 28
 image_width = 28
 
 [checkpoint]
-ckpt_path = "/home/tadhiel/transformerlm/runs/2026-03-13_00-00-00/versions/v001000/model.safetensors"
+ckpt_path = "/home/tadhiel/transformerlm/runs/2026-03-14_23-06-09/versions/v001000/model.safetensors"
 
 [inference]
 generation_mode = "categorical_flow"
 label = 1
-num_samples = 16
+num_samples = 4
 steps = 32
 block_length = 784
 temperature = 0.0

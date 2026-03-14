@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import torch
 
 from trainkit.objectives.categorical_flow import CategoricalFlowObjective
+from trainkit.objectives.data import CategoricalFlowBatch
 from transformerlm.models import CategoricalFlowImage
 
 
@@ -128,3 +129,34 @@ def test_categorical_flow_model_supports_jvp_attention(device):
     assert tangent.shape == (2, 4, 8)
     assert torch.isfinite(out).all().item()
     assert torch.isfinite(tangent).all().item()
+
+
+def test_categorical_flow_val_samples_include_inputs(device):
+    cfg = SimpleNamespace(
+        vocab_size=8,
+        random_trunc_prob=0.0,
+        null_label_id=10,
+        uncond_label_dropout_prob=0.0,
+        categorical_flow_prior_type="discunif",
+        categorical_flow_diag_fraction=0.5,
+        categorical_flow_inf_weight=1.0,
+        categorical_flow_ec_weight=1.0,
+        categorical_flow_td_weight=1.0,
+    )
+    objective = CategoricalFlowObjective(cfg, _DummyTokenizer())
+    batch = CategoricalFlowBatch(
+        x0_prior=torch.nn.functional.one_hot(torch.tensor([[1, 2, 3, 4]], device=device), num_classes=8).to(torch.float32),
+        clean_targets=torch.tensor([[4, 3, 2, 1]], dtype=torch.long, device=device),
+        s_timesteps=torch.tensor([[0.25]], dtype=torch.float32, device=device),
+        t_timesteps=torch.tensor([[0.75]], dtype=torch.float32, device=device),
+        attention_mask=None,
+        loss_mask=None,
+        metadata={},
+        labels=torch.tensor([1], dtype=torch.long, device=device),
+    )
+    inputs = torch.nn.functional.one_hot(torch.tensor([[0, 1, 2, 3]], device=device), num_classes=8).to(torch.float32)
+    logits = torch.nn.functional.one_hot(torch.tensor([[3, 2, 1, 0]], device=device), num_classes=8).to(torch.float32)
+
+    samples = objective.val_samples(inputs, logits, batch, max_samples=1)
+
+    assert samples == [{"inputs": [0, 1, 2, 3], "predictions": [3, 2, 1, 0], "targets": [4, 3, 2, 1]}]
