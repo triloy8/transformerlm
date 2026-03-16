@@ -1,8 +1,8 @@
 [model]
 model_type = "image_cfm"
 label_vocab_size = 11
-vocab_size = 32
-pixel_bins = 32
+vocab_size = 2
+pixel_bins = 2
 context_length = 784
 d_model = 256
 num_layers = 8
@@ -19,13 +19,13 @@ image_height = 28
 image_width = 28
 
 [checkpoint]
-ckpt_path = "/home/tadhiel/transformerlm/runs/2026-03-14_23-06-09/versions/v001000/model.safetensors"
+ckpt_path = "/home/tadhiel/transformerlm/runs/2026-03-15_15-23-33/versions/v021000/model.safetensors"
 
 [inference]
 generation_mode = "categorical_flow"
-label = 1
+label = 10
 num_samples = 4
-steps = 32
+steps = 128
 block_length = 784
 temperature = 0.0
 top_p = 1.0

@@ -1,8 +1,8 @@
 [model]
 model_type = "image_cfm"
 label_vocab_size = 11
-vocab_size = 32
-pixel_bins = 32
+vocab_size = 2
+pixel_bins = 2
 context_length = 784
 d_model = 256
 num_layers = 8
