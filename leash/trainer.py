@@ -17,8 +17,8 @@ from leash.data import (
     RowBatcher,
     TokenizerLike,
     MegatronPackedBatcher,
-    build_mnist_batcher,
 )
+from leash.data.hf_image import build_mnist_batcher
 from leash.ddp import DDP, OptimizerStateSharding
 from leash.ddp.utils import broadcast_string, setup_process_group, cleanup_process_group, allreduce_mean
 from leash.logger import Logger, ConsoleLogger, WandbLogger, RankZeroLogger
