@@ -1,0 +1,63 @@
+[project]
+name = "leash"
+version = "0.1.0"
+description = "Reusable training and basic inference runtime for transformerlm and future sibling repos."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "numpy",
+    "torch",
+    "tqdm>=4.67.1",
+    "datasets>=3.0.1",
+]
+
+[project.optional-dependencies]
+wandb = [
+    "wandb>=0.19.7",
+]
+s3 = [
+    "boto3>=1.34.0",
+]
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "leash",
+    "leash.checkpointing",
+    "leash.data",
+    "leash.ddp",
+    "leash.inference",
+    "leash.logger",
+    "leash.objectives",
+    "leash.training",
+]
+
+[tool.setuptools.package-dir]
+leash = "."
+"leash.checkpointing" = "checkpointing"
+"leash.data" = "data"
+"leash.ddp" = "ddp"
+"leash.inference" = "inference"
+"leash.logger" = "logger"
+"leash.objectives" = "objectives"
+"leash.training" = "training"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["UP"]
+ignore = [
+    "F722",
+]
+
+[tool.pytest.ini_options]
+addopts = ["-q"]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "gpu: requires CUDA/GPU",
+  "cpu: requires only CPU resources",
+]
