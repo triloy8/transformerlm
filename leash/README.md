@@ -4,6 +4,8 @@
 
 Reusable training and basic inference runtime for `transformerlm` and future sibling repos. It is model-agnostic at the repo boundary and expects callers to supply concrete model/tokenizer wiring.
 
+`leash` is being shaped so it can stand on its own, but it is still intended to be used through `transformerlm` for now while the package boundary and standalone workflow continue to settle.
+
 ## ✨ What Is This?
 
 `leash` is not meant to be a tiny "trainer" package. Its role is to own the reusable generative runtime layer:
