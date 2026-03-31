@@ -5,6 +5,9 @@ from leash.objectives import (
     JointMntpAutoregressiveObjective,
     FlowMatchingObjective,
     CategoricalFlowObjective,
+    get_objective_factory,
+    list_objectives,
+    register_objective,
 )
 
 
@@ -68,3 +71,21 @@ def test_build_objective_categorical_flow():
     )
     objective = build_objective(cfg, _DummyTokenizer())
     assert isinstance(objective, CategoricalFlowObjective)
+
+
+def test_objective_registry_lists_builtin_entries():
+    names = list_objectives()
+    assert "diffusion" in names
+    assert "joint-mntp-ar" in names
+
+
+def test_register_objective_allows_extension():
+    class _CustomObjective:
+        def __init__(self, cfg, tokenizer) -> None:
+            self.cfg = cfg
+            self.tokenizer = tokenizer
+
+    register_objective("custom-test", _CustomObjective)
+    factory = get_objective_factory("custom-test")
+    objective = factory(SimpleNamespace(), _DummyTokenizer())
+    assert isinstance(objective, _CustomObjective)

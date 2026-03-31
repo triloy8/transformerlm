@@ -5,23 +5,7 @@ from leash.objectives.diffusion import DiffusionObjective, FlowMatchingObjective
 from leash.objectives.autoregressive import AutoregressiveObjective
 from leash.objectives.joint import JointDiffusionAutoregressiveObjective, JointMntpAutoregressiveObjective
 from leash.objectives.categorical_flow import CategoricalFlowObjective
-
-
-def build_objective(cfg, tokenizer) -> Objective:
-    name = str(getattr(cfg, "training_objective", "diffusion")).lower()
-    if name == "ar":
-        return AutoregressiveObjective(cfg, tokenizer)
-    if name == "megadlm-diffusion":
-        return MegaDlmDiffusionObjective(cfg, tokenizer)
-    if name == "flow":
-        return FlowMatchingObjective(cfg, tokenizer)
-    if name == "categorical-flow":
-        return CategoricalFlowObjective(cfg, tokenizer)
-    if name == "joint-diffusion-ar":
-        return JointDiffusionAutoregressiveObjective(cfg, tokenizer)
-    if name == "joint-mntp-ar":
-        return JointMntpAutoregressiveObjective(cfg, tokenizer)
-    return DiffusionObjective(cfg, tokenizer)
+from leash.objectives.registry import build_objective, get_objective_factory, list_objectives, register_objective
 
 
 __all__ = [
@@ -34,6 +18,9 @@ __all__ = [
     "JointMntpAutoregressiveObjective",
     "CategoricalFlowObjective",
     "build_objective",
+    "get_objective_factory",
+    "list_objectives",
+    "register_objective",
     "DiffusionBatch",
     "AutoregressiveBatch",
     "CategoricalFlowBatch",
