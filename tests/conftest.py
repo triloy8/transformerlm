@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from transformerlm.models import TransformerLM
-from trainkit.training.optim import AdamW
+from leash.training.optim import AdamW
 from transformerlm.utils.dtypes import DTYPES
 
 from tests.fixtures import TrainingBundle, build_toy_language_modeling_dataset

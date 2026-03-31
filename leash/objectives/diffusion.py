@@ -3,17 +3,17 @@ from __future__ import annotations
 from typing import Optional
 import torch
 
-from trainkit.inference.generate import autoregressive_generate, diffusion_generate, flow_image_generate
-from trainkit.objectives.base import Objective
-from trainkit.objectives.data import (
+from leash.inference.generate import autoregressive_generate, diffusion_generate, flow_image_generate
+from leash.objectives.base import Objective
+from leash.objectives.data import (
     DiffusionBatch,
     FlowMatchingBatch,
     get_batch,
     get_flow_matching_batch,
     get_megadlm_diffusion_batch,
 )
-from trainkit.objectives.loss import cross_entropy, diffusion_cross_entropy
-from trainkit.objectives.schedule import resolve_scheduled_p_mask
+from leash.objectives.loss import cross_entropy, diffusion_cross_entropy
+from leash.objectives.schedule import resolve_scheduled_p_mask
 
 
 class DiffusionObjective(Objective):

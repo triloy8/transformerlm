@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from profiling import nvtx
 
 from transformerlm.models.instrumented.layers import Linear
-from trainkit.inference.sampling import softmax
+from leash.inference.sampling import softmax
 
 ALLOWED_ATTENTION_BACKENDS = {"custom", "torch_sdpa"}
 

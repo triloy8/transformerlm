@@ -5,11 +5,11 @@ import math
 
 import torch
 
-from trainkit.inference.generate import autoregressive_generate, diffusion_generate
-from trainkit.objectives.base import Objective
-from trainkit.objectives.data import JointBatch, get_joint_batch
-from trainkit.objectives.loss import autoregressive_cross_entropy, diffusion_cross_entropy, mntp_cross_entropy
-from trainkit.objectives.schedule import resolve_scheduled_p_mask
+from leash.inference.generate import autoregressive_generate, diffusion_generate
+from leash.objectives.base import Objective
+from leash.objectives.data import JointBatch, get_joint_batch
+from leash.objectives.loss import autoregressive_cross_entropy, diffusion_cross_entropy, mntp_cross_entropy
+from leash.objectives.schedule import resolve_scheduled_p_mask
 
 
 class JointDiffusionAutoregressiveObjective(Objective):

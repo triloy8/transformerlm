@@ -1,6 +1,6 @@
 import numpy as np
 
-from trainkit.data.image import dequantize_tokens_to_uint8
+from leash.data.image import dequantize_tokens_to_uint8
 
 
 def _uniform_quantize_uint8(pixels: np.ndarray, bins: int) -> np.ndarray:

@@ -5,8 +5,8 @@ import torch.multiprocessing as mp
 
 from config import load_train_config
 from transformerlm.builders import build_model, build_tokenizer, build_activation_filter
-from trainkit.objectives import build_objective
-from trainkit.trainer import train_ddp
+from leash.objectives import build_objective
+from leash.trainer import train_ddp
 from cli.utils import add_config_args, load_config_or_print
 
 

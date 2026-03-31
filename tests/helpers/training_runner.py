@@ -10,24 +10,24 @@ import random
 import torch
 import torch.distributed as dist
 
-from trainkit.objectives import Objective
-from trainkit.training.loop import train_loop
-from trainkit.objectives.data import get_batch, DiffusionBatch
-from trainkit.training.grad import gradient_clipping
-from trainkit.objectives.loss import diffusion_cross_entropy
-from trainkit.training.schedule import lr_cosine_schedule
-from trainkit.training.optim import AdamW
-from trainkit.checkpointing import (
+from leash.objectives import Objective
+from leash.training.loop import train_loop
+from leash.objectives.data import get_batch, DiffusionBatch
+from leash.training.grad import gradient_clipping
+from leash.objectives.loss import diffusion_cross_entropy
+from leash.training.schedule import lr_cosine_schedule
+from leash.training.optim import AdamW
+from leash.checkpointing import (
     CheckpointCoordinator,
     load_manifest,
     load_model_from_manifest,
     load_optimizer_shard,
     load_rng_state,
 )
-from trainkit.checkpointing.state import restore_rng_state
+from leash.checkpointing.state import restore_rng_state
 
-from trainkit.ddp import DDP, OptimizerStateSharding
-from trainkit.ddp.utils import setup_process_group, cleanup_process_group, allreduce_mean
+from leash.ddp import DDP, OptimizerStateSharding
+from leash.ddp.utils import setup_process_group, cleanup_process_group, allreduce_mean
 
 from tests.fixtures import TrainingBundle
 

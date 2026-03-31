@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from trainkit.objectives import (
+from leash.objectives import (
     build_objective,
     JointMntpAutoregressiveObjective,
     FlowMatchingObjective,

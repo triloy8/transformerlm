@@ -1,5 +1,5 @@
 """Training infrastructure package (standalone)."""
 
-from trainkit.objectives import Objective
+from leash.objectives import Objective
 
 __all__ = ["Objective"]

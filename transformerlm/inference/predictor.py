@@ -7,7 +7,7 @@ from safetensors.torch import load_file
 from transformerlm.tokenizer.tokenizer import Tokenizer
 from transformerlm.models import TransformerLM, TransformerImage, DiTImage, CategoricalFlowImage
 from transformerlm.models.attention import set_sdp_backend
-from trainkit.inference.generate import (
+from leash.inference.generate import (
     autoregressive_generate,
     diffusion_generate,
     image_diffusion_generate,
@@ -15,8 +15,8 @@ from trainkit.inference.generate import (
     flow_image_generate,
 )
 from transformerlm.utils.dtypes import DTYPES
-from trainkit.logger import Logger
-from trainkit.data.image import dequantize_tokens_to_uint8, flow_pixels_to_uint8
+from leash.logger import Logger
+from leash.data.image import dequantize_tokens_to_uint8, flow_pixels_to_uint8
 
 
 def _normalize_state_dict_keys(state_dict):

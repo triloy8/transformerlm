@@ -1,4 +1,4 @@
-from trainkit.inference import (
+from leash.inference import (
     diffusion_generate,
     autoregressive_generate,
     generate,

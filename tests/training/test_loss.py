@@ -1,6 +1,6 @@
 import torch
 
-from trainkit.objectives.loss import cross_entropy, diffusion_cross_entropy, mntp_cross_entropy
+from leash.objectives.loss import cross_entropy, diffusion_cross_entropy, mntp_cross_entropy
 
 
 def test_diffusion_cross_entropy_matches_weighted_average():

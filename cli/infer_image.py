@@ -3,7 +3,7 @@ import argparse
 from config import load_image_infer_config
 from transformerlm.inference.predictor import infer_image
 from cli.utils import add_config_args, load_config_or_print
-from trainkit.logger import ConsoleLogger
+from leash.logger import ConsoleLogger
 
 
 def _parse_only_config():

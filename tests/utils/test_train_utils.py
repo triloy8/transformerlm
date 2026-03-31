@@ -4,13 +4,13 @@ import torch
 import pytest
 
 from transformerlm.models import TransformerLM
-from trainkit.objectives.loss import cross_entropy
-from trainkit.objectives.data import get_batch
-from trainkit.training.optim import AdamW
-from trainkit.training.schedule import lr_cosine_schedule
-from trainkit.training.grad import gradient_clipping
-from trainkit.data.streaming import StreamingBatcher
-from trainkit.checkpointing import (
+from leash.objectives.loss import cross_entropy
+from leash.objectives.data import get_batch
+from leash.training.optim import AdamW
+from leash.training.schedule import lr_cosine_schedule
+from leash.training.grad import gradient_clipping
+from leash.data.streaming import StreamingBatcher
+from leash.checkpointing import (
     CheckpointCoordinator,
     load_manifest,
     load_model_from_manifest,

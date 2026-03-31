@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from transformerlm.models.layers import Linear
-from trainkit.inference.sampling import softmax
+from leash.inference.sampling import softmax
 
 ALLOWED_ATTENTION_BACKENDS = {"custom", "torch_sdpa"}
 ALLOWED_SDP_BACKENDS = {"auto", "flash", "mem_efficient", "math"}

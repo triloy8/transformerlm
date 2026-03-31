@@ -6,7 +6,7 @@ import torch
 import torch.distributed as dist
 from torch.nn import Parameter
 
-from trainkit.ddp.utils import get_rank, get_world_size
+from leash.ddp.utils import get_rank, get_world_size
 
 
 class OptimizerStateSharding(torch.optim.Optimizer):

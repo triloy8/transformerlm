@@ -1,6 +1,6 @@
-# Trainkit
+# Leash
 
-Generic training infrastructure extracted from `transformerlm`. It is model‑agnostic and expects
+Reusable training and basic inference infrastructure extracted from `transformerlm`. It is model‑agnostic and expects
 callers to supply model/tokenizer/objective builders.
 
 ## What It Provides
@@ -14,12 +14,12 @@ callers to supply model/tokenizer/objective builders.
 ## Repo Wiring
 
 The CLI entry points live in `cli/` and pass builders from `transformerlm` into
-`trainkit.trainer.train_ddp`:
+`leash.trainer.train_ddp`:
 
 - Model and tokenizer builders: `transformerlm/builders.py`
-- Objective selection: `trainkit.objectives.build_objective`
+- Objective selection: `leash.objectives.build_objective`
 
-This keeps `trainkit` reusable while `transformerlm` stays focused on modeling and tokenization.
+This keeps `leash` reusable while `transformerlm` stays focused on modeling and tokenization.
 
 ## Runtime Notes
 
@@ -39,12 +39,12 @@ uv run transformerlm-train --config config/resources/train.toml
 
 ## API Surface
 
-- `trainkit.trainer.train_ddp`: main DDP entry point, takes builder callables.
-- `trainkit.training.loop.train_loop`: core training loop (model, optimizer, objective).
-- `trainkit.objectives`: diffusion/AR batching + losses and `build_objective`.
-- `trainkit.data.streaming`: HF streaming iterator + batchers.
-- `trainkit.checkpointing`: manifest‑based checkpoint saving/resume.
-- `trainkit.logger`: console/W&B logging and rank‑zero wrappers.
+- `leash.trainer.train_ddp`: main DDP entry point, takes builder callables.
+- `leash.training.loop.train_loop`: core training loop (model, optimizer, objective).
+- `leash.objectives`: diffusion/AR batching + losses and `build_objective`.
+- `leash.data.streaming`: HF streaming iterator + batchers.
+- `leash.checkpointing`: manifest‑based checkpoint saving/resume.
+- `leash.logger`: console/W&B logging and rank‑zero wrappers.
 
 ## Logging
 
@@ -83,5 +83,5 @@ project = "your-project"
 
 ## Notes
 
-- `trainkit` assumes configuration is validated by the caller (see `config/schemas.py`).
+- `leash` assumes configuration is validated by the caller (see `config/schemas.py`).
 - For single‑process experiments, you can call `train_loop` directly with a concrete objective.

@@ -11,16 +11,16 @@
 
 A from‑scratch Transformer LM stack with flexible objectives: diffusion or autoregressive, chosen via config. The repo is split into:
 - `transformerlm`: model, tokenizer and inference utilities.
-- `trainkit`: training stack (loop, DDP, checkpointing, logging, streaming).
+- `leash`: training stack (loop, DDP, checkpointing, logging, streaming).
 
-See `trainkit/README.md` for training‑specific details.
+See `leash/README.md` for training‑specific details.
 
 ## 🧭 Overview
 
 - From‑scratch model: decoder‑only Transformer LM (RMSNorm, SwiGLU, RoPE, SDPA/MHA), implemented directly with PyTorch modules.
 - From‑scratch tokenizer: byte‑level BPE training and IO, producing `vocab.json` and `merges.txt`.
 - Objectives: diffusion (bidirectional decoding) or autoregressive (causal), selected via config.
-- Training stack lives in `trainkit` (see `trainkit/README.md`).
+- Training stack lives in `leash` (see `leash/README.md`).
 - CLI + TOML configs: consistent entry points built around config schemas.
 - Benchmarking + profiling: tokenizer/inference throughput checks and memory/runtime inspection.
 
@@ -42,7 +42,7 @@ uv run transformerlm-train-tokenizer --config config/resources/train_tokenizer.t
 uv run transformerlm-train --config config/resources/train.toml
 ```
 
-> See `trainkit/README.md` for training/runtime behavior (DDP backend, logging, optimizer options, validation, accumulation).
+> See `leash/README.md` for training/runtime behavior (DDP backend, logging, optimizer options, validation, accumulation).
 
 - Generate text:
 

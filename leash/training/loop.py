@@ -3,8 +3,8 @@ import torch
 from contextlib import nullcontext
 import numpy as np
 from typing import Optional, Callable
-from trainkit.logger import Logger
-from trainkit.objectives import Objective
+from leash.logger import Logger
+from leash.objectives import Objective
 
 
 def train_loop(

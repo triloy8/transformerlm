@@ -14,13 +14,13 @@ from transformerlm.tokenizer.tokenizer import Tokenizer
 from transformerlm.models import TransformerLM
 from transformerlm.models.attention import set_sdp_backend
 from transformerlm.utils.dtypes import DTYPES
-from trainkit.inference.generate import diffusion_generate
-from trainkit.objectives.loss import cross_entropy, diffusion_cross_entropy
-from trainkit.training.optim import AdamW
-from trainkit.training.grad import gradient_clipping
-from trainkit.objectives.data import get_batch as diffusion_get_batch
-from trainkit.data.streaming import HFTokenIteratorFactory, StreamingBatcher, RowBatcher
-from trainkit.logger import ConsoleLogger
+from leash.inference.generate import diffusion_generate
+from leash.objectives.loss import cross_entropy, diffusion_cross_entropy
+from leash.training.optim import AdamW
+from leash.training.grad import gradient_clipping
+from leash.objectives.data import get_batch as diffusion_get_batch
+from leash.data.streaming import HFTokenIteratorFactory, StreamingBatcher, RowBatcher
+from leash.logger import ConsoleLogger
 from profiling import nvtx
 
 from .common import measure, mean, stddev

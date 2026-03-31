@@ -11,7 +11,7 @@ import torch
 from safetensors.torch import load_file
 
 from config import load_sweep_infer_config
-from trainkit.inference.generate import autoregressive_generate, diffusion_generate
+from leash.inference.generate import autoregressive_generate, diffusion_generate
 from transformerlm.models import TransformerLM
 from transformerlm.models.attention import set_sdp_backend
 from transformerlm.tokenizer.tokenizer import Tokenizer

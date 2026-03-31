@@ -1,7 +1,7 @@
 import torch
 
-from trainkit.inference.generate import diffusion_generate, image_diffusion_generate, categorical_flow_image_generate
-from trainkit.inference.sampling import compute_transfer_schedule, add_gumbel_noise
+from leash.inference.generate import diffusion_generate, image_diffusion_generate, categorical_flow_image_generate
+from leash.inference.sampling import compute_transfer_schedule, add_gumbel_noise
 
 
 class DummyModel(torch.nn.Module):

@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 import torch
 
-from trainkit.objectives.categorical_flow import CategoricalFlowObjective
-from trainkit.objectives.data import CategoricalFlowBatch
+from leash.objectives.categorical_flow import CategoricalFlowObjective
+from leash.objectives.data import CategoricalFlowBatch
 from transformerlm.models import CategoricalFlowImage
 
 

@@ -1,6 +1,6 @@
 import torch
 
-from trainkit.data.streaming import HFTokenIteratorFactory, StreamingBatcher
+from leash.data.streaming import HFTokenIteratorFactory, StreamingBatcher
 
 
 class DummyTokenizer:

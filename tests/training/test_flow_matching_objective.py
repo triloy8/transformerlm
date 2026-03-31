@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import torch
 
-from trainkit.objectives.diffusion import FlowMatchingObjective
+from leash.objectives.diffusion import FlowMatchingObjective
 
 
 class _DummyTokenizer:

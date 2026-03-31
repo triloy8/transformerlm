@@ -7,7 +7,7 @@ from typing import Iterator, Optional
 import numpy as np
 import torch
 
-from trainkit.logger import Logger
+from leash.logger import Logger
 
 
 _INDEX_HEADER = b"MMIDIDX\x00\x00"

@@ -10,7 +10,7 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 import time
 from typing import Optional
-from trainkit.logger import Logger
+from leash.logger import Logger
 
 
 def train_bpe(args, *, logger: Optional[Logger] = None):

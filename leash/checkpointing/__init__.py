@@ -1,5 +1,5 @@
-from trainkit.checkpointing.manager import CheckpointManager
-from trainkit.checkpointing.manifest import (
+from leash.checkpointing.manager import CheckpointManager
+from leash.checkpointing.manifest import (
     CheckpointCoordinator,
     load_manifest,
     load_model_from_manifest,

@@ -11,8 +11,8 @@ import torch
 from contextlib import nullcontext
 
 from config import asdict_pretty
-from trainkit.checkpointing import CheckpointManager
-from trainkit.data import (
+from leash.checkpointing import CheckpointManager
+from leash.data import (
     HFTokenIteratorFactory,
     StreamingBatcher,
     RowBatcher,
@@ -20,14 +20,14 @@ from trainkit.data import (
     MegatronPackedBatcher,
     build_mnist_batcher,
 )
-from trainkit.ddp import DDP, OptimizerStateSharding
-from trainkit.ddp.utils import broadcast_string, setup_process_group, cleanup_process_group, allreduce_mean
-from trainkit.logger import Logger, ConsoleLogger, WandbLogger, RankZeroLogger
-from trainkit.objectives import Objective
-from trainkit.training.grad import gradient_clipping
-from trainkit.training.loop import train_loop
-from trainkit.training.optim import build_optimizer_param_groups, resolve_optimizer_cls
-from trainkit.training.schedule import lr_cosine_schedule, lr_constant_schedule, lr_constant_with_warmup_schedule
+from leash.ddp import DDP, OptimizerStateSharding
+from leash.ddp.utils import broadcast_string, setup_process_group, cleanup_process_group, allreduce_mean
+from leash.logger import Logger, ConsoleLogger, WandbLogger, RankZeroLogger
+from leash.objectives import Objective
+from leash.training.grad import gradient_clipping
+from leash.training.loop import train_loop
+from leash.training.optim import build_optimizer_param_groups, resolve_optimizer_cls
+from leash.training.schedule import lr_cosine_schedule, lr_constant_schedule, lr_constant_with_warmup_schedule
 
 
 def _seed_everything(seed: int, device: str | torch.device, *, rank: int = 0) -> torch.Generator:

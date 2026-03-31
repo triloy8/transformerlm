@@ -27,7 +27,7 @@ import numpy as np
 import torch
 from PIL import Image, ImageDraw
 
-from trainkit.data.image import build_mnist_batcher, dequantize_tokens_to_uint8
+from leash.data.image import build_mnist_batcher, dequantize_tokens_to_uint8
 
 pixel_bins = int(os.environ["PIXEL_BINS"])
 num_samples = int(os.environ["NUM_SAMPLES"])

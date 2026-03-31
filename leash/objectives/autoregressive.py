@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import torch
 
-from trainkit.inference.generate import autoregressive_generate
-from trainkit.objectives.base import Objective
-from trainkit.objectives.data import AutoregressiveBatch, get_autoregressive_batch
-from trainkit.objectives.loss import autoregressive_cross_entropy
+from leash.inference.generate import autoregressive_generate
+from leash.objectives.base import Objective
+from leash.objectives.data import AutoregressiveBatch, get_autoregressive_batch
+from leash.objectives.loss import autoregressive_cross_entropy
 
 
 class AutoregressiveObjective(Objective):

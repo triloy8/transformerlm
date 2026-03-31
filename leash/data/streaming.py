@@ -8,7 +8,7 @@ from datasets import load_dataset
 from datasets.utils import logging as hf_logging
 import torch
 
-from trainkit.logger import Logger
+from leash.logger import Logger
 
 
 class TokenizerLike(Protocol):

@@ -1,6 +1,6 @@
 import torch
 
-from trainkit.inference.sampling import top_p_filter, softmax, compute_transfer_schedule
+from leash.inference.sampling import top_p_filter, softmax, compute_transfer_schedule
 
 
 def test_softmax_matches_torch(device):

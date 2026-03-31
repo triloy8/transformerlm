@@ -7,7 +7,7 @@ import torch
 
 
 class Objective(ABC):
-    """Objective interface for trainkit."""
+    """Objective interface for leash."""
 
     name: str
 

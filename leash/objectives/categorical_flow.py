@@ -4,10 +4,10 @@ from typing import Optional
 
 import torch
 
-from trainkit.inference.generate import categorical_flow_image_generate
-from trainkit.objectives.base import Objective
-from trainkit.objectives.data import CategoricalFlowBatch, get_categorical_flow_batch
-from trainkit.objectives.loss import cross_entropy
+from leash.inference.generate import categorical_flow_image_generate
+from leash.objectives.base import Objective
+from leash.objectives.data import CategoricalFlowBatch, get_categorical_flow_batch
+from leash.objectives.loss import cross_entropy
 
 
 def _masked_mean(values: torch.Tensor, loss_mask: torch.Tensor | None) -> torch.Tensor:
