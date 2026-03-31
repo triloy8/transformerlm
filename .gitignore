@@ -214,10 +214,10 @@ __marimo__/
 /runs/
 
 # Planning
-todo/
+.todo/
 *.pdf
 !README.md
-research/
+.research/
 
 # nsys profiling
 *.qdstrm
