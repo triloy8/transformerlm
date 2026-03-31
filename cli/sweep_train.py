@@ -99,12 +99,14 @@ def main():
     cfg_dc = TrainConfig.model_validate(cfg_dict)
 
     ns = build_train_namespace(cfg_dc, str(args_cfg.config))
+    config_snapshot = asdict_pretty(cfg_dc)
     nprocs = max(1, int(cfg_dc.ddp.num_gpus_per_node))
     mp.spawn(
         train_ddp,
         args=(
             ns,
             cfg_dc,
+            config_snapshot,
             build_model,
             build_tokenizer,
             build_objective,

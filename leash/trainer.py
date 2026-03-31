@@ -10,7 +10,6 @@ import time
 import torch
 from contextlib import nullcontext
 
-from config import asdict_pretty
 from leash.checkpointing import CheckpointManager
 from leash.data import (
     HFTokenIteratorFactory,
@@ -89,6 +88,7 @@ def train_ddp(
     local_rank: int,
     args,
     cfg_dc,
+    config_snapshot: dict,
     model_builder: Callable[[object], torch.nn.Module],
     tokenizer_builder: Callable[[object], TokenizerLike],
     objective_builder: Callable[[object, TokenizerLike], Objective],
@@ -129,7 +129,6 @@ def train_ddp(
 
     logger, run_name, ckpting_save_folder = init_logging(global_rank, cfg, cfg_dc)
     config_path = Path(getattr(cfg, "config_path", ""))
-    config_snapshot = asdict_pretty(cfg_dc)
     checkpoint_manager = CheckpointManager(
         checkpointing_cfg=getattr(cfg_dc, "checkpointing", None),
         runs_path=cfg.runs_path,

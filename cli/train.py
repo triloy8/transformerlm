@@ -3,7 +3,7 @@ from pathlib import Path
 
 import torch.multiprocessing as mp
 
-from config import load_train_config
+from config import asdict_pretty, load_train_config
 from transformerlm.builders import build_model, build_tokenizer, build_activation_filter
 from leash.objectives import build_objective
 from leash.trainer import train_ddp
@@ -153,6 +153,7 @@ def main():
 
     # Build an argparse-like namespace expected by existing code
     ns = build_train_namespace(cfg_dc, str(args_cfg.config))
+    config_snapshot = asdict_pretty(cfg_dc)
 
     nprocs = max(1, int(cfg_dc.ddp.num_gpus_per_node))
     mp.spawn(
@@ -160,6 +161,7 @@ def main():
         args=(
             ns,
             cfg_dc,
+            config_snapshot,
             build_model,
             build_tokenizer,
             build_objective,
