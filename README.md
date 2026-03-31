@@ -9,18 +9,49 @@
 
 ## ✨ What Is This?
 
-A from‑scratch Transformer LM stack with flexible objectives: diffusion or autoregressive, chosen via config. The repo is split into:
-- `transformerlm`: model, tokenizer and inference utilities.
-- `leash`: training stack (loop, DDP, checkpointing, logging, streaming).
+A from‑scratch Transformer LM repo that now acts as a thin experiment layer on top of `leash`.
+
+The intended split is:
+- `leash`: reusable runtime for training and basic inference across this repo and future sibling repos.
+- `transformerlm`: concrete Transformer LM models, tokenizer implementation, config schemas, experiment wiring, and repo-specific CLIs.
 
 See `leash/README.md` for training‑specific details.
+
+## 🧭 Vision
+
+This repo is moving toward a small ecosystem shape:
+
+- `leash` owns the reusable generative runtime:
+  - training loop
+  - DDP/runtime concerns
+  - checkpointing
+  - logging
+  - common objectives
+  - batching/data utilities
+  - basic generation utilities
+- `transformerlm` owns the concrete LM implementation:
+  - model architecture
+  - tokenizer training and IO
+  - config schemas and example TOMLs
+  - experiment presets and benchmarking
+  - repo-specific model loading and prediction adapters
+
+The goal is for future experiment repos to look more like `transformerlm`: thin consumers of `leash`, not copies of training/runtime code.
+
+## 🧩 Ownership
+
+As a rule of thumb:
+
+- If code depends on optimization, schedules, batches, distributed execution, checkpoints, logging, or basic token/image generation mechanics, it probably belongs in `leash`.
+- If code depends on `TransformerLM` model classes, tokenizer assets, this repo's config tree, or experiment taxonomy, it belongs in `transformerlm`.
+- If something is reusable across your own model repos, it is a good `leash` candidate even if it is not universally generic.
 
 ## 🧭 Overview
 
 - From‑scratch model: decoder‑only Transformer LM (RMSNorm, SwiGLU, RoPE, SDPA/MHA), implemented directly with PyTorch modules.
 - From‑scratch tokenizer: byte‑level BPE training and IO, producing `vocab.json` and `merges.txt`.
 - Objectives: diffusion (bidirectional decoding) or autoregressive (causal), selected via config.
-- Training stack lives in `leash` (see `leash/README.md`).
+- Training and basic generation runtime live in `leash` (see `leash/README.md`).
 - CLI + TOML configs: consistent entry points built around config schemas.
 - Benchmarking + profiling: tokenizer/inference throughput checks and memory/runtime inspection.
 
@@ -88,8 +119,9 @@ The `Justfile` plus helper scripts under `scripts/` provide a thin remote contro
 ## 🧩 Modules
 
 - `transformerlm.models`: core Transformer layers + attention (`transformerlm/models/transformer.py`).
-- `transformerlm.inference`: sampling + generation helpers (`transformerlm/inference/predictor.py`).
+- `transformerlm.inference`: repo-specific prediction/model-loading adapters over `leash` generation (`transformerlm/inference/predictor.py`).
 - `transformerlm.tokenizer`: BPE trainer + tokenizer IO (`transformerlm/tokenizer/tokenizer.py`).
+- `leash`: shared runtime package for training, objectives, data, checkpointing, logging, and basic inference (`leash/`).
 - `cli`: training/inference entry points (`cli/train.py`).
 - `benchmarking`: quick perf checks (`benchmarking/bench_infer_latency.py`).
 - `config`: schemas + example TOMLs (`config/resources/*.toml`).
