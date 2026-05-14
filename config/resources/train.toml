@@ -29,7 +29,7 @@ grad_clip_max_l2_norm = 3.0
 lr_schedule = "cosine" # constant/cosine/constant_with_warmup
 
 [training]
-batch_size = 32
+batch_size = 64
 max_train_iteration = 60000
 max_val_iteration = 10
 val_freq_iteration = 100
