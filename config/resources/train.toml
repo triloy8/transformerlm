@@ -1,5 +1,5 @@
 [model]
-vocab_size = 4097
+vocab_size = 4096
 context_length = 2048
 d_model = 512
 num_layers = 12
@@ -10,7 +10,7 @@ attention_backend = "torch_sdpa"
 attention_sdp_backend = "auto"
 device = "cuda"
 dtype = "float32"
-mask_token_id = 4096
+mask_token_id = 4095 # unused for AR; 4096 is the diffusion-only mask token
 eot_token_id = 4095
 noise_epsilon = 0.001
 random_trunc_prob = 0.0 # 0.01
@@ -39,7 +39,7 @@ grad_accum_steps = 1
 train_loss_ema_decay = 0.99
 amp_enabled = true
 amp_dtype = "bfloat16"
-objective = "joint-diffusion-ar" # diffusion/megadlm-diffusion/ar/joint-diffusion-ar
+objective = "ar" # diffusion/megadlm-diffusion/ar/joint-diffusion-ar
 joint_diffusion_alpha = 0.30      # diffusion weight alpha (AR weight = 1-alpha)
 joint_diffusion_alpha_end = 0.45  # increase diffusion weight later in training
 joint_alpha_schedule = "linear"   # constant/linear/cosine
@@ -86,7 +86,7 @@ special_tokens_path = "./data/special_tokens_simplestories_4k.json"
 
 [logging]
 backend = "wandb"
-architecture = "DiffusionLM"
+architecture = "TransformerLM"
 dataset = "SimpleStories"
 log_activation_norms = false
 log_weight_norms = true
@@ -97,7 +97,7 @@ val_log_every = 8
 val_log_samples = 1
 
 [train_infer]
-infer_every = 0
+infer_every = 1000
 prompts = ["Silently,", "Suddenly,"]
 steps = 512
 total_length = 512
@@ -106,14 +106,14 @@ temperature = 0.2
 top_p = 0.95
 cfg_scale = 0.0
 remasking = "low_confidence"
-generation_mode = "diffusion"
+generation_mode = "ar"
 logits_eos_inf = false
 confidence_eos_eot_inf = false
 seed = 3410
 
 [wandb]
 entity = "yiltro8-org"
-project = "joint_lm_simplestories"
+project = "ar_lm_simplestories_4k_2048"
 
 [ddp]
 backend = "nccl"               # gloo/nccl
