@@ -16,9 +16,10 @@ fi
 read_env_value() {
 	local var_name="$1"
 	local file_path="$2"
-	grep -Em1 "^[[:space:]]*(export[[:space:]]+)?${var_name}=" "$file_path" \
+	grep -Em1 "^[[:space:]]*(export[[:space:]]+)?${var_name}=" "$file_path" 2>/dev/null \
 		| sed -E "s/^[[:space:]]*(export[[:space:]]+)?${var_name}=//" \
-		| tr -d '\r\n'
+		| tr -d '\r\n' \
+		|| true
 }
 
 WANDB_API_KEY=$(
