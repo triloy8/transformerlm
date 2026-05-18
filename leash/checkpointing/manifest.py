@@ -10,6 +10,8 @@ import torch
 from .storage import (
     S3ConfigData,
     S3Uploader,
+    HfConfigData,
+    HfUploader,
     ensure_dir,
     ensure_local,
     file_info,
@@ -39,6 +41,7 @@ class CheckpointCoordinator:
         best_metric_name: str,
         best_mode: str,
         s3_cfg: Optional[S3ConfigData],
+        hf_cfg: Optional[HfConfigData],
         rank: int,
         world_size: int,
     ) -> None:
@@ -50,6 +53,8 @@ class CheckpointCoordinator:
         self.rank = int(rank)
         self.world_size = int(world_size)
         self._s3 = S3Uploader(s3_cfg) if s3_cfg is not None else None
+        self._hf = HfUploader(hf_cfg) if hf_cfg is not None else None
+        self._hf_cfg = hf_cfg
         self._config_src_path = config_src_path
         self._config_snapshot = config_snapshot
         self._run_manifest_path = self.run_dir / "manifest.json"
@@ -139,6 +144,19 @@ class CheckpointCoordinator:
         if self._s3 is None:
             return
         self._s3.upload(path, path_to_key(path, self.runs_root_parent))
+
+    def _maybe_upload_hf_run(self, version_id: str, step: int) -> None:
+        if self._hf is None:
+            return
+        try:
+            self._hf.upload_run_dir(
+                self.run_dir,
+                commit_message=f"Upload transformerlm run {self.run_id} {version_id} step {int(step)}",
+            )
+        except Exception as exc:
+            if self._hf_cfg is not None and self._hf_cfg.strict:
+                raise
+            print(f"warning: Hugging Face checkpoint upload failed: {exc}", flush=True)
 
     def _save_rng_payload(self) -> Dict[str, Any]:
         generator = self._state_sources.get("generator")
@@ -378,6 +396,7 @@ class CheckpointCoordinator:
         save_json(self._aliases_dir / "best.json", best_alias)
         self._maybe_upload(self._aliases_dir / "latest.json")
         self._maybe_upload(self._aliases_dir / "best.json")
+        self._maybe_upload_hf_run(version_id, step)
 
         self._best_alias = best_alias
 

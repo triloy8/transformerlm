@@ -234,6 +234,7 @@ def test_checkpointing_roundtrip(tmp_path, device):
         best_metric_name="val_loss",
         best_mode="min",
         s3_cfg=None,
+        hf_cfg=None,
         rank=0,
         world_size=1,
     )

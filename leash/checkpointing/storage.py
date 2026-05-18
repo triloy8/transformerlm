@@ -52,6 +52,42 @@ class S3Uploader:
         client.download_file(self._cfg.bucket, remote_key, str(local_path))
 
 
+@dataclass(frozen=True)
+class HfConfigData:
+    repo_id: str
+    repo_type: str = "model"
+    revision: str = "main"
+    path_in_repo: str = ""
+    token: Optional[str] = None
+    private: bool = False
+    strict: bool = False
+
+
+class HfUploader:
+    def __init__(self, cfg: HfConfigData) -> None:
+        self._cfg = cfg
+
+    def upload_run_dir(self, run_dir: Path, *, commit_message: str) -> None:
+        from huggingface_hub import create_repo, upload_folder  # type: ignore
+
+        create_repo(
+            repo_id=self._cfg.repo_id,
+            repo_type=self._cfg.repo_type,
+            private=self._cfg.private,
+            exist_ok=True,
+            token=self._cfg.token,
+        )
+        upload_folder(
+            repo_id=self._cfg.repo_id,
+            repo_type=self._cfg.repo_type,
+            revision=self._cfg.revision,
+            folder_path=str(run_dir),
+            path_in_repo=self._cfg.path_in_repo.strip("/"),
+            commit_message=commit_message,
+            token=self._cfg.token,
+        )
+
+
 def ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 

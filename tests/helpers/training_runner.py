@@ -89,6 +89,7 @@ def _build_checkpoint_coordinator(run_dir: Path, *, rank: int, world_size: int) 
         best_metric_name="val_loss",
         best_mode="min",
         s3_cfg=None,
+        hf_cfg=None,
         rank=rank,
         world_size=world_size,
     )

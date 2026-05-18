@@ -229,3 +229,4 @@ __marimo__/
 env/*
 !env/wandb.env.example
 !env/checkpointing.env.example
+!env/huggingface.env.example

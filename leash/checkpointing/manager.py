@@ -16,7 +16,7 @@ from .manifest import (
     load_rng_state,
 )
 from .state import restore_rng_state
-from .storage import S3ConfigData, S3Uploader
+from .storage import HfConfigData, S3ConfigData, S3Uploader
 
 
 class CheckpointManager:
@@ -51,6 +51,7 @@ class CheckpointManager:
         self.resume_run_dir = self._resolve_resume_run_dir()
 
         self._s3_cfg = self._build_s3_config()
+        self._hf_cfg = self._build_hf_config()
         self._s3_uploader = S3Uploader(self._s3_cfg) if self._s3_cfg is not None else None
 
         self.coordinator = CheckpointCoordinator(
@@ -62,6 +63,7 @@ class CheckpointManager:
             best_metric_name=self.best_metric_name,
             best_mode=self.best_mode,
             s3_cfg=self._s3_cfg,
+            hf_cfg=self._hf_cfg,
             rank=self._rank,
             world_size=self._world_size,
         )
@@ -94,6 +96,33 @@ class CheckpointManager:
             access_key_id=env_access,
             secret_access_key=env_secret,
             session_token=env_token,
+        )
+
+    def _build_hf_config(self) -> Optional[HfConfigData]:
+        def _env(name: str) -> Optional[str]:
+            value = os.environ.get(name)
+            if value is None:
+                return None
+            value = value.strip()
+            return value or None
+
+        def _env_bool(name: str, default: bool = False) -> bool:
+            value = _env(name)
+            if value is None:
+                return default
+            return value.lower() in {"1", "true", "yes", "on"}
+
+        repo_id = _env("CHECKPOINTING_HF_REPO_ID")
+        if repo_id is None:
+            return None
+        return HfConfigData(
+            repo_id=repo_id,
+            repo_type=_env("CHECKPOINTING_HF_REPO_TYPE") or "model",
+            revision=_env("CHECKPOINTING_HF_REVISION") or "main",
+            path_in_repo=_env("CHECKPOINTING_HF_PATH_IN_REPO") or "",
+            token=_env("CHECKPOINTING_HF_TOKEN") or _env("HF_TOKEN") or _env("HUGGING_FACE_HUB_TOKEN"),
+            private=_env_bool("CHECKPOINTING_HF_PRIVATE", False),
+            strict=_env_bool("CHECKPOINTING_HF_STRICT", False),
         )
 
     def _resolve_resume_run_dir(self) -> Path:
