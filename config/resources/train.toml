@@ -31,7 +31,7 @@ grad_clip_max_l2_norm = 3.0
 lr_schedule = "wsd" # constant/cosine/constant_with_warmup/wsd
 
 [training]
-batch_size = 64
+batch_size = 128
 max_train_iteration = 120000
 max_val_iteration = 10
 val_freq_iteration = 100
