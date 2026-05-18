@@ -107,7 +107,10 @@ class OptimizerConfig(_BaseConfig):
     max_learning_rate: float
     min_learning_rate: float
     warmup_iters: int
-    cosine_cycle_iters: int
+    cosine_cycle_iters: Optional[int] = None
+    lr_decay_iters: Optional[int] = None
+    wsd_decay_iters: Optional[int] = None
+    wsd_decay_style: str = "exponential"
     grad_clip_max_l2_norm: float
     muon: Optional[MuonOptimizerConfig] = None
 
@@ -117,8 +120,8 @@ class OptimizerConfig(_BaseConfig):
         if self.optimizer_name not in ALLOWED_OPTIMIZERS:
             raise ValueError(f"optimizer_name must be one of {sorted(ALLOWED_OPTIMIZERS)}")
         self.lr_schedule = self.lr_schedule.lower()
-        if self.lr_schedule not in {"cosine", "constant", "constant_with_warmup"}:
-            raise ValueError("lr_schedule must be one of: cosine, constant, constant_with_warmup")
+        if self.lr_schedule not in {"cosine", "constant", "constant_with_warmup", "wsd"}:
+            raise ValueError("lr_schedule must be one of: cosine, constant, constant_with_warmup, wsd")
         if len(self.betas) != 2 or not (0 <= self.betas[0] < 1 and 0 <= self.betas[1] < 1):
             raise ValueError("optimizer betas must be 2 values in [0, 1)")
         if self.eps <= 0:
@@ -130,9 +133,29 @@ class OptimizerConfig(_BaseConfig):
         for attr in ("initial_learning_rate", "max_learning_rate", "min_learning_rate", "grad_clip_max_l2_norm"):
             if getattr(self, attr) <= 0:
                 raise ValueError(f"{attr} must be > 0")
-        for attr in ("warmup_iters", "cosine_cycle_iters"):
+        if self.cosine_cycle_iters is None:
+            if self.lr_schedule == "cosine":
+                raise ValueError("cosine_cycle_iters must be set when lr_schedule='cosine'")
+            self.cosine_cycle_iters = self.lr_decay_iters if self.lr_decay_iters is not None else 0
+        if self.lr_decay_iters is None:
+            self.lr_decay_iters = self.cosine_cycle_iters
+        self.wsd_decay_style = self.wsd_decay_style.lower()
+        if self.wsd_decay_style not in {"exponential", "linear", "cosine"}:
+            raise ValueError("wsd_decay_style must be one of: exponential, linear, cosine")
+        for attr in ("warmup_iters", "cosine_cycle_iters", "lr_decay_iters"):
             if getattr(self, attr) < 0:
                 raise ValueError(f"{attr} must be >= 0")
+        if self.lr_schedule == "wsd":
+            if self.lr_decay_iters <= 0:
+                raise ValueError("lr_decay_iters must be > 0 when lr_schedule='wsd'")
+            if self.warmup_iters >= self.lr_decay_iters:
+                raise ValueError("warmup_iters must be < lr_decay_iters when lr_schedule='wsd'")
+            if self.wsd_decay_iters is None:
+                raise ValueError("wsd_decay_iters must be set when lr_schedule='wsd'")
+            if self.wsd_decay_iters <= 0:
+                raise ValueError("wsd_decay_iters must be > 0 when lr_schedule='wsd'")
+            if self.wsd_decay_iters > self.lr_decay_iters:
+                raise ValueError("wsd_decay_iters must be <= lr_decay_iters when lr_schedule='wsd'")
         if self.min_learning_rate > self.max_learning_rate:
             raise ValueError("min_learning_rate must be <= max_learning_rate")
         if self.initial_learning_rate > self.max_learning_rate:

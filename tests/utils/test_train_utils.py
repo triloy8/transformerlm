@@ -7,7 +7,7 @@ from transformerlm.models import TransformerLM
 from leash.objectives.loss import cross_entropy
 from leash.objectives.data import get_batch
 from leash.training.optim import AdamW
-from leash.training.schedule import lr_cosine_schedule
+from leash.training.schedule import lr_cosine_schedule, lr_wsd_schedule
 from leash.training.grad import gradient_clipping
 from leash.data.streaming import StreamingBatcher
 from leash.checkpointing import (
@@ -83,6 +83,50 @@ def test_lr_cosine_schedule_cycle_zero_returns_min_beyond():
     cycle = 0
     # For iterations beyond cycle, lr should be min_lr
     assert lr_cosine_schedule(1, max_lr, min_lr, warmup, cycle) == pytest.approx(min_lr)
+
+
+def test_lr_wsd_schedule_boundaries():
+    max_lr = 1.0
+    min_lr = 0.1
+    warmup = 10
+    decay_iters = 100
+    wsd_decay_iters = 20
+    assert lr_wsd_schedule(
+        0, max_lr, min_lr, warmup, decay_iters, wsd_decay_iters=wsd_decay_iters
+    ) == pytest.approx(0.0)
+    assert lr_wsd_schedule(
+        warmup, max_lr, min_lr, warmup, decay_iters, wsd_decay_iters=wsd_decay_iters
+    ) == pytest.approx(max_lr)
+    assert lr_wsd_schedule(
+        decay_iters - wsd_decay_iters,
+        max_lr,
+        min_lr,
+        warmup,
+        decay_iters,
+        wsd_decay_iters=wsd_decay_iters,
+    ) == pytest.approx(max_lr)
+    assert lr_wsd_schedule(
+        decay_iters, max_lr, min_lr, warmup, decay_iters, wsd_decay_iters=wsd_decay_iters
+    ) == pytest.approx(min_lr)
+    assert lr_wsd_schedule(
+        decay_iters + 1, max_lr, min_lr, warmup, decay_iters, wsd_decay_iters=wsd_decay_iters
+    ) == pytest.approx(min_lr)
+
+
+def test_lr_wsd_exponential_decay_midpoint():
+    max_lr = 1.0
+    min_lr = 0.1
+    lr = lr_wsd_schedule(
+        90,
+        max_lr,
+        min_lr,
+        warmup_iters=10,
+        lr_decay_iters=100,
+        wsd_decay_iters=20,
+        wsd_decay_style="exponential",
+    )
+    coeff = 2.0 * (0.5 ** 0.5) - 1.0
+    assert lr == pytest.approx(min_lr + coeff * (max_lr - min_lr))
 
 
 def test_gradient_clipping_caps_total_norm(device):

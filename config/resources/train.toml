@@ -1,5 +1,5 @@
 [model]
-vocab_size = 4096
+vocab_size = 4097
 context_length = 2048
 d_model = 512
 num_layers = 12
@@ -10,7 +10,7 @@ attention_backend = "torch_sdpa"
 attention_sdp_backend = "auto"
 device = "cuda"
 dtype = "float32"
-mask_token_id = 4095 # unused for AR; 4096 is the diffusion-only mask token
+mask_token_id = 4096
 eot_token_id = 4095
 noise_epsilon = 0.001
 random_trunc_prob = 0.0 # 0.01
@@ -23,14 +23,16 @@ weight_decay = 0.1 # adamw
 initial_learning_rate = 0.0001 # adamw, unused in cosine scheduler
 max_learning_rate = 0.0006825702703541168 # adamw, used by const schedule
 min_learning_rate = 0.00006825702703541168 # adamw
-warmup_iters = 600
-cosine_cycle_iters = 60000
+warmup_iters = 1000
+lr_decay_iters = 120000
+wsd_decay_iters = 12000
+wsd_decay_style = "exponential"
 grad_clip_max_l2_norm = 3.0
-lr_schedule = "cosine" # constant/cosine/constant_with_warmup
+lr_schedule = "wsd" # constant/cosine/constant_with_warmup/wsd
 
 [training]
 batch_size = 64
-max_train_iteration = 60000
+max_train_iteration = 120000
 max_val_iteration = 10
 val_freq_iteration = 100
 seed = 3407
@@ -39,7 +41,7 @@ grad_accum_steps = 1
 train_loss_ema_decay = 0.99
 amp_enabled = true
 amp_dtype = "bfloat16"
-objective = "ar" # diffusion/megadlm-diffusion/ar/joint-diffusion-ar
+objective = "megadlm-diffusion" # diffusion/megadlm-diffusion/ar/joint-diffusion-ar
 joint_diffusion_alpha = 0.30      # diffusion weight alpha (AR weight = 1-alpha)
 joint_diffusion_alpha_end = 0.45  # increase diffusion weight later in training
 joint_alpha_schedule = "linear"   # constant/linear/cosine
@@ -106,14 +108,14 @@ temperature = 0.2
 top_p = 0.95
 cfg_scale = 0.0
 remasking = "low_confidence"
-generation_mode = "ar"
+generation_mode = "diffusion"
 logits_eos_inf = false
 confidence_eos_eot_inf = false
 seed = 3410
 
 [wandb]
 entity = "yiltro8-org"
-project = "ar_lm_simplestories_4k_2048"
+project = "megadlm_diffusion_simplestories_4k_2048"
 
 [ddp]
 backend = "nccl"               # gloo/nccl

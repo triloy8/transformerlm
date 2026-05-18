@@ -257,6 +257,67 @@ def test_optimizer_initial_lr_defaults_to_max(tmp_path: Path):
     assert cfg.optimizer.initial_learning_rate == pytest.approx(cfg.optimizer.max_learning_rate)
 
 
+def test_train_config_wsd_does_not_require_cosine_cycle_iters(tmp_path: Path):
+    vocab = tmp_path / "vocab.json"
+    merges = tmp_path / "merges.txt"
+    special_tokens = tmp_path / "special_tokens.json"
+    vocab.write_text("{}")
+    merges.write_text("")
+    special_tokens.write_text("{}")
+    cfg_path = tmp_path / "train_wsd.toml"
+    write(cfg_path, f"""
+    [model]
+    vocab_size = 16
+    context_length = 8
+    d_model = 8
+    num_layers = 1
+    num_heads = 2
+    d_ff = 16
+    rope_theta = 10000.0
+    device = "cpu"
+    dtype = "float32"
+    mask_token_id = 15
+
+    [optimizer]
+    eps = 1e-8
+    weight_decay = 0.0
+    max_learning_rate = 0.01
+    min_learning_rate = 0.001
+    warmup_iters = 1
+    lr_decay_iters = 10
+    wsd_decay_iters = 2
+    wsd_decay_style = "exponential"
+    lr_schedule = "wsd"
+    grad_clip_max_l2_norm = 1.0
+
+    [training]
+    batch_size = 2
+    max_train_iteration = 2
+    max_val_iteration = 1
+    val_freq_iteration = 1
+    objective = "diffusion"
+
+    [checkpointing]
+    ckpting_save_iter = 2
+
+    [data]
+    runs_path = "{tmp_path.as_posix()}"
+    dataset_name = "example/dataset"
+    train_split = "train"
+    val_split = "validation"
+    text_field = "text"
+
+    [data.tokenizer]
+    vocab_path = "{vocab.as_posix()}"
+    merges_path = "{merges.as_posix()}"
+    special_tokens_path = "{special_tokens.as_posix()}"
+    """)
+    cfg = load_train_config(cfg_path)
+    assert cfg.optimizer.lr_schedule == "wsd"
+    assert cfg.optimizer.lr_decay_iters == 10
+    assert cfg.optimizer.cosine_cycle_iters == 10
+
+
 def test_image_model_requires_vocab_size_matches_pixel_bins(tmp_path: Path):
     cfg_path = tmp_path / "train_image_bad.toml"
     write(cfg_path, f"""

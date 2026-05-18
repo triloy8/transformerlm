@@ -26,7 +26,12 @@ from leash.objectives import Objective
 from leash.training.grad import gradient_clipping
 from leash.training.loop import train_loop
 from leash.training.optim import build_optimizer_param_groups, resolve_optimizer_cls
-from leash.training.schedule import lr_cosine_schedule, lr_constant_schedule, lr_constant_with_warmup_schedule
+from leash.training.schedule import (
+    lr_cosine_schedule,
+    lr_constant_schedule,
+    lr_constant_with_warmup_schedule,
+    lr_wsd_schedule,
+)
 
 
 def _seed_everything(seed: int, device: str | torch.device, *, rank: int = 0) -> torch.Generator:
@@ -55,6 +60,7 @@ def _seed_everything(seed: int, device: str | torch.device, *, rank: int = 0) ->
 def _prepare_optimizer_setup(cfg, model):
     optimizer_name = str(getattr(cfg, "optimizer_name", "adamw")).lower()
     setattr(cfg, "optimizer_name", optimizer_name)
+    lr_schedule_name = str(getattr(cfg, "lr_schedule", "cosine")).lower()
     optimizer_cls = resolve_optimizer_cls(optimizer_name)
     muon_cfg = getattr(cfg, "muon_cfg", None)
     param_groups = build_optimizer_param_groups(model, optimizer_name, muon_cfg)
@@ -79,7 +85,11 @@ def _prepare_optimizer_setup(cfg, model):
         group.setdefault("max_lr", float(cfg.max_learning_rate))
         group.setdefault("min_lr", float(cfg.min_learning_rate))
         group.setdefault("warmup_iters", int(cfg.warmup_iters))
-        group.setdefault("cosine_cycle_iters", int(cfg.cosine_cycle_iters))
+        if lr_schedule_name == "wsd":
+            schedule_horizon = int(getattr(cfg, "lr_decay_iters"))
+        else:
+            schedule_horizon = int(getattr(cfg, "cosine_cycle_iters", 0))
+        group.setdefault("cosine_cycle_iters", schedule_horizon)
         group.setdefault("lr", float(group.get("initial_lr")))
     return optimizer_cls, param_groups, kwargs
 
@@ -436,6 +446,21 @@ def train_ddp(
         lr_schedule = lr_constant_schedule
     elif lr_schedule_name == "constant_with_warmup":
         lr_schedule = lr_constant_with_warmup_schedule
+    elif lr_schedule_name == "wsd":
+        wsd_decay_iters = int(getattr(cfg, "wsd_decay_iters"))
+        wsd_decay_style = str(getattr(cfg, "wsd_decay_style", "exponential"))
+
+        def lr_schedule(it, max_lr, min_lr, warmup_iters, lr_decay_iters):
+            return lr_wsd_schedule(
+                it,
+                max_lr,
+                min_lr,
+                warmup_iters,
+                lr_decay_iters,
+                wsd_decay_iters=wsd_decay_iters,
+                wsd_decay_style=wsd_decay_style,
+            )
+
     else:
         lr_schedule = lr_cosine_schedule
 
@@ -461,7 +486,9 @@ def train_ddp(
         max_learning_rate=cfg.max_learning_rate,
         min_learning_rate=cfg.min_learning_rate,
         warmup_iters=cfg.warmup_iters,
-        cosine_cycle_iters=cfg.cosine_cycle_iters,
+        cosine_cycle_iters=(
+            int(getattr(cfg, "lr_decay_iters")) if lr_schedule_name == "wsd" else int(cfg.cosine_cycle_iters)
+        ),
         max_train_iteration=cfg.max_train_iteration,
         max_val_iteration=cfg.max_val_iteration,
         val_freq_iteration=cfg.val_freq_iteration,
@@ -530,6 +557,9 @@ def build_run_config(cfg, cfg_dc):
         "min_learning_rate": cfg.min_learning_rate,
         "warmup_iters": cfg.warmup_iters,
         "cosine_cycle_iters": cfg.cosine_cycle_iters,
+        "lr_decay_iters": getattr(cfg, "lr_decay_iters", None),
+        "wsd_decay_iters": getattr(cfg, "wsd_decay_iters", None),
+        "wsd_decay_style": getattr(cfg, "wsd_decay_style", None),
         "lr_schedule": str(getattr(cfg, "lr_schedule", "cosine")),
         "max_train_iteration": cfg.max_train_iteration,
         "max_val_iteration": cfg.max_val_iteration,
