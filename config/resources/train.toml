@@ -13,7 +13,7 @@ dtype = "float32"
 mask_token_id = 4096
 eot_token_id = 4095
 noise_epsilon = 0.001
-random_trunc_prob = 0.0 # 0.01
+random_trunc_prob = 0.01
 
 [optimizer]
 optimizer_name = "adamw"
@@ -47,11 +47,11 @@ joint_diffusion_alpha_end = 0.45  # increase diffusion weight later in training
 joint_alpha_schedule = "linear"   # constant/linear/cosine
 joint_alpha_schedule_start = 0.10 # normalized progress
 joint_alpha_schedule_end = 0.70   # normalized progress
-p_mask_schedule = "linear"        # none/linear/cosine
-p_mask_start = 0.30               # early easier masking
-p_mask_end = 0.85                 # later harder masking
-p_mask_schedule_start = 0.0       # normalized progress
-p_mask_schedule_end = 1.0         # normalized progress
+p_mask_schedule = "none"          # MegaDLM samples p_mask uniformly per row
+# p_mask_start = 0.30
+# p_mask_end = 0.85
+# p_mask_schedule_start = 0.0
+# p_mask_schedule_end = 1.0
 eot_mask_loss = false
 # repeat_masking_seed = 3407
 # p_mask_override = 0.3
