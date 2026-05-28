@@ -3,7 +3,7 @@
 </div>
 
 ## 🚀 Runs: 
-- [trixyL/transformerlm-ar-8k-simplestories](https://hf.co/trixyL/transformerlm-ar-8k-simplestories) — AR SimpleStories run (512 ctx, 8K vocab) 🤖📚 ([demo](https://huggingface.co/spaces/trixyL/simplestories-ar-demo))
+- [trixyL/transformerlm-ar-4k-simplestories](https://hf.co/trixyL/transformerlm-ar-4k-simplestories) — AR SimpleStories run (2k48 ctx, 4K vocab) 🤖📚 ([demo](https://huggingface.co/spaces/trixyL/simplestories-ar-demo))
 - [trixyL/transformerlm-diff-32-mnist](https://hf.co/trixyL/transformerlm-diff-32-mnist) — MNIST image diffusion run (32-bin quantized pixels, 28x28) 🤖🌫️ ([demo](https://huggingface.co/spaces/trixyL/mnist-diff-demo)) 
 - [trixyL/transformerlm-flow-mnist](https://hf.co/trixyL/transformerlm-flow-mnist) — MNIST image Flow-matching run (lerp, euler) 🤖🌊 ([demo](https://huggingface.co/spaces/trixyL/mnist-flow-demo)) 
 
