@@ -32,7 +32,7 @@ lr_schedule = "wsd" # constant/cosine/constant_with_warmup/wsd
 
 [training]
 batch_size = 128
-max_train_iteration = 120000
+max_train_iteration = 140000
 max_val_iteration = 10
 val_freq_iteration = 100
 seed = 3407
@@ -99,7 +99,7 @@ val_log_every = 8
 val_log_samples = 1
 
 [train_infer]
-infer_every = 1000
+infer_every = 500
 prompts = ["Silently,", "Suddenly,"]
 steps = 512
 total_length = 512
@@ -131,10 +131,10 @@ nccl_p2p_disable = true
 enabled = true
 ckpting_save_iter = 1000
 resume_optimizer = true
-model_init_path = "./runs/diffusion_2k48_4k/model.safetensors"
+# model_init_path = "./runs/diffusion_2k48_4k/model.safetensors"
 best_metric_name = "val_loss"
 best_mode = "min"
-# resume_from = "latest" # exact resume from "latest", "best", or path to manifest.json
-# run_id = "2025-12-29_16-00-44"
+resume_from = "latest" # exact resume from "latest", "best", or path to manifest.json
+run_id = "2026-05-18_21-20-00"
 
 # Remote storage is configured via env vars (see env/checkpointing.env.example).
