@@ -41,6 +41,7 @@ class CheckpointManager:
 
         self.enabled = bool(getattr(checkpointing_cfg, "enabled", True)) if checkpointing_cfg else False
         self.resume_from = getattr(checkpointing_cfg, "resume_from", None) if checkpointing_cfg else None
+        self.model_init_path = getattr(checkpointing_cfg, "model_init_path", None) if checkpointing_cfg else None
         self.resume_run_id = getattr(checkpointing_cfg, "run_id", None) if checkpointing_cfg else None
         self.resume_optimizer = bool(getattr(checkpointing_cfg, "resume_optimizer", True)) if checkpointing_cfg else True
         self.best_metric_name = getattr(checkpointing_cfg, "best_metric_name", "val_loss") if checkpointing_cfg else "val_loss"
@@ -162,6 +163,21 @@ class CheckpointManager:
             val_batcher=val_batcher,
         )
 
+    def _load_initial_model_weights(self, ddp_model: torch.nn.Module) -> None:
+        if self.model_init_path is None:
+            return
+
+        if self._rank == 0:
+            from safetensors.torch import load_file
+
+            init_path = Path(self.model_init_path)
+            model_state = load_file(str(init_path))
+            if any(key.startswith("_orig_mod.") for key in model_state):
+                model_state = {key.removeprefix("_orig_mod."): value for key, value in model_state.items()}
+            ddp_model.load_state_dict(model_state)
+            print(f"initialized model weights from {init_path}", flush=True)
+        ddp_model.broadcast_parameters(src=0)
+
     def maybe_resume(
         self,
         *,
@@ -174,7 +190,9 @@ class CheckpointManager:
         device: str,
     ) -> int:
         if not (self.enabled and self.resume_from):
-            ddp_model.broadcast_parameters(src=0)
+            self._load_initial_model_weights(ddp_model)
+            if self.model_init_path is None:
+                ddp_model.broadcast_parameters(src=0)
             return 0
 
         manifest_path = resolve_checkpoint_reference(

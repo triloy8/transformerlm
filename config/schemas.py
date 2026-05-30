@@ -510,6 +510,7 @@ class CheckpointingConfig(_BaseConfig):
     ckpting_save_iter: int
     resume_optimizer: bool = True
     resume_from: Optional[str] = None
+    model_init_path: Optional[Path] = None
     best_metric_name: str = "val_loss"
     best_mode: str = "min"
     run_id: Optional[str] = None
@@ -522,6 +523,8 @@ class CheckpointingConfig(_BaseConfig):
             raise ValueError("checkpointing.best_mode must be 'min' or 'max'")
         if not self.best_metric_name:
             raise ValueError("checkpointing.best_metric_name must not be empty")
+        if self.model_init_path is not None and not self.model_init_path.exists():
+            raise FileNotFoundError(f"checkpointing.model_init_path not found: {self.model_init_path}")
         return self
 
 
