@@ -14,33 +14,33 @@ rope_theta = 10000.0
 attention_backend = "torch_sdpa"
 attention_sdp_backend = "auto"
 device = "cuda"
-dtype = "float16"
+dtype = "float32"
 mask_token_id = 4096
 eot_token_id = 4095
 noise_epsilon = 0.001
 random_trunc_prob = 0.0
 
 [checkpoint]
-ckpt_path = "/home/tadhiel/transformerlm/runs/2026-02-16_00-21-08/versions/v026000/model.safetensors"
+ckpt_path = "./runs/diffusion_2k48_4k/model.safetensors"
 
 [inference]
 prompt = "<|endoftext|>"
 steps = 1024
 total_length = 1024
-block_length = 1024
-temperature = 0.5
+block_length = 1023
+temperature = 0.7
 top_p = 0.95
 mask_id = 4096
-seed = 3407
+seed = 34
 eos_token_id = 4095
 cfg_scale = 0.0
 remasking = "low_confidence"
 logits_eos_inf = false
 confidence_eos_eot_inf = false
-generation_mode = "ar" # diffusion/ar
+generation_mode = "diffusion" # diffusion/ar
 
 [guide]
-guidance_mode = "ar_agreement" # none/ar_agreement (set to ar_agreement to enable guide)
+guidance_mode = "none" # none/ar_agreement
 fallback_strategy = "single_token"
 
 [guide.model]
@@ -54,11 +54,11 @@ rope_theta = 10000.0
 attention_backend = "torch_sdpa"
 attention_sdp_backend = "auto"
 device = "cuda"
-dtype = "float16"
+dtype = "float32"
 mask_token_id = 4096
 eot_token_id = 4095
 noise_epsilon = 0.001
 random_trunc_prob = 0.0
 
 [guide.checkpoint]
-ckpt_path = "/home/tadhiel/transformerlm/runs/2026-02-16_00-21-08/versions/v026000/model.safetensors"
+ckpt_path = "./runs/diffusion_2k48_4k/model.safetensors"
