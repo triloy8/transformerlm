@@ -166,7 +166,7 @@ resume_optimizer = false
 # model_init_path = "./runs/diffusion_2k48_4k/model.safetensors"
 best_metric_name = "val_loss"
 best_mode = "min"
-resume_from = "latest" # exact resume from "latest", "best", or path to manifest.json
-run_id = "2026-05-18_21-20-00"
+# resume_from = "latest" # exact resume from "latest", "best", or path to manifest.json
+# run_id = "2026-05-18_21-20-00"
 
 # Remote storage is configured via env vars (see env/checkpointing.env.example).
