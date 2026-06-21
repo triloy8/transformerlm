@@ -153,6 +153,8 @@ def train_ddp(
 
     model = model_builder(cfg)
 
+    optimizer_cls, param_groups, optimizer_kwargs = _prepare_optimizer_setup(cfg, model)
+
     if bool(getattr(cfg, "compile_enabled", False)):
         if not hasattr(torch, "compile"):
             raise RuntimeError("torch.compile is not available in this PyTorch build")
@@ -169,7 +171,6 @@ def train_ddp(
 
     ddp_model = DDP(model, cfg.world_size, cfg.bucket_size_mb)
 
-    optimizer_cls, param_groups, optimizer_kwargs = _prepare_optimizer_setup(cfg, model)
     optimizer = OptimizerStateSharding(
         param_groups,
         optimizer_cls,
