@@ -16,19 +16,51 @@ noise_epsilon = 0.001
 random_trunc_prob = 0.0
 
 [optimizer]
-optimizer_name = "adamw"
-betas = [0.9, 0.95] # adamw
-eps = 1e-8 # adamw
-weight_decay = 0.1 # adamw
-initial_learning_rate = 0.00006825702703541168 # adamw, unused in cosine scheduler
-max_learning_rate = 0.0006825702703541168 # adamw, used by const schedule
-min_learning_rate = 0.000006825702703541168 # adamw
+optimizer_name = "muon"
+betas = [0.9, 0.95] # adamw fallback defaults
+eps = 1e-8 # adamw fallback default
+weight_decay = 0.1 # fallback default; muon groups override this
+initial_learning_rate = 0.00006825702703541168 # fallback default; muon groups override this
+max_learning_rate = 0.0006825702703541168 # fallback default; muon groups override this
+min_learning_rate = 0.000006825702703541168 # fallback default; muon groups override this
 warmup_iters = 1000
 lr_decay_iters = 121506
 wsd_decay_iters = 12000
 wsd_decay_style = "exponential"
 grad_clip_max_l2_norm = 3.0
 lr_schedule = "wsd" # constant/cosine/constant_with_warmup/wsd
+
+[optimizer.muon.hidden]
+initial_learning_rate = 0.00006825702703541168
+max_learning_rate = 0.0006825702703541168
+min_learning_rate = 0.000006825702703541168
+momentum = 0.95
+weight_decay = 0.1
+adjust_lr_fn = "match_rms_adamw" # Moonshot/PyTorch AdamW-RMS matched scaling
+
+[optimizer.muon.head]
+initial_learning_rate = 0.00006825702703541168
+max_learning_rate = 0.0006825702703541168
+min_learning_rate = 0.000006825702703541168
+betas = [0.9, 0.95]
+eps = 1e-10
+weight_decay = 0.1
+
+[optimizer.muon.embed]
+initial_learning_rate = 0.00006825702703541168
+max_learning_rate = 0.0006825702703541168
+min_learning_rate = 0.000006825702703541168
+betas = [0.9, 0.95]
+eps = 1e-10
+weight_decay = 0.1
+
+[optimizer.muon.scalar]
+initial_learning_rate = 0.00006825702703541168
+max_learning_rate = 0.0006825702703541168
+min_learning_rate = 0.000006825702703541168
+betas = [0.9, 0.95]
+eps = 1e-10
+weight_decay = 0.1
 
 [training]
 batch_size = 128
