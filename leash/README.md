@@ -74,6 +74,7 @@ Practical guideline:
 - Optimizer state sharding is enabled by default in the training entry point to reduce per-rank optimizer memory.
 - Choose the optimizer via `[optimizer].optimizer_name` (`"adamw"` default, `"muon"` experimental) while keeping the rest of the `[optimizer]` schedule knobs unchanged.
 - When using Muon, configure per-group hyperparameters under `[optimizer.muon.*]` (hidden, head, embed, scalar) so each param group carries its own learning-rate range and optimizer settings; AdamW ignores those subtables.
+- Muon hidden matrices support `adjust_lr_fn = "original"` by default, or `"match_rms_adamw"` for the Moonshot/PyTorch AdamW-RMS matched update scale.
 - To fully skip validation (e.g., when no separate split exists), set `[training].skip_validation = true`; otherwise the loop will run `max_val_iteration` batches every `val_freq_iteration` steps.
 - Gradient accumulation is controlled by `[training].grad_accum_steps`, `max_train_iteration` is still counted in micro-steps (each accumulation step), so scale it by `grad_accum_steps` if you want to keep the same number of optimizer steps.
 

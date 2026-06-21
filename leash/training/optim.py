@@ -5,6 +5,8 @@ import torch
 from torch import nn
 from torch.nn import Parameter
 
+MUON_ADJUST_LR_FNS = {"original", "match_rms_adamw", "spectral_unclamped"}
+
 
 class AdamW(torch.optim.Optimizer):
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.01):
@@ -74,6 +76,20 @@ def zeropower_via_newtonschulz5(G, steps: int):
     return X
 
 
+def muon_update_scale(update: torch.Tensor, adjust_lr_fn: str) -> float:
+    adjust_lr_fn = adjust_lr_fn.lower()
+    rows, cols = update.shape[-2], update.shape[-1]
+    if adjust_lr_fn == "original":
+        return max(1, rows / cols) ** 0.5
+    if adjust_lr_fn == "match_rms_adamw":
+        return 0.2 * max(rows, cols) ** 0.5
+    if adjust_lr_fn == "spectral_unclamped":
+        return (rows / cols) ** 0.5
+    raise ValueError(
+        f"Muon adjust_lr_fn must be one of {sorted(MUON_ADJUST_LR_FNS)}"
+    )
+
+
 class Muon(torch.optim.Optimizer):
     """Muon with AdamW fallback"""
 
@@ -86,6 +102,7 @@ class Muon(torch.optim.Optimizer):
         weight_decay: float = 0.0,
         betas=(0.9, 0.95),
         eps: float = 1e-10,
+        adjust_lr_fn: str = "original",
     ):
         for group in param_groups:
             if "use_muon" not in group:
@@ -95,7 +112,22 @@ class Muon(torch.optim.Optimizer):
                 group.setdefault("lr", lr)
                 group.setdefault("momentum", momentum)
                 group.setdefault("weight_decay", weight_decay)
-                allowed = {"params", "lr", "momentum", "weight_decay", "use_muon", "name", *extra_keys}
+                group.setdefault("adjust_lr_fn", adjust_lr_fn)
+                group["adjust_lr_fn"] = str(group["adjust_lr_fn"]).lower()
+                if group["adjust_lr_fn"] not in MUON_ADJUST_LR_FNS:
+                    raise ValueError(
+                        f"Muon adjust_lr_fn must be one of {sorted(MUON_ADJUST_LR_FNS)}"
+                    )
+                allowed = {
+                    "params",
+                    "lr",
+                    "momentum",
+                    "weight_decay",
+                    "adjust_lr_fn",
+                    "use_muon",
+                    "name",
+                    *extra_keys,
+                }
             else:
                 group.setdefault("lr", lr)
                 group.setdefault("betas", betas)
@@ -127,7 +159,7 @@ class Muon(torch.optim.Optimizer):
                     if b.ndim == 4: # for the case of conv filters
                         b = b.view(len(b), -1)
                     o = zeropower_via_newtonschulz5(b, steps=5)
-                    o *= max(1, grad.size(-2) / grad.size(-1))**0.5
+                    o *= muon_update_scale(o, str(group["adjust_lr_fn"]))
 
                     p.data *= 1 - group["lr"] * group["weight_decay"]
                     p.data -= group["lr"] * o.reshape(p.shape)
@@ -260,6 +292,7 @@ def build_optimizer_param_groups(
         "min_lr": float(hidden_cfg.min_learning_rate),
         "momentum": float(hidden_cfg.momentum),
         "weight_decay": float(hidden_cfg.weight_decay),
+        "adjust_lr_fn": str(hidden_cfg.adjust_lr_fn),
         "use_muon": True,
     }
 
@@ -269,6 +302,7 @@ def build_optimizer_param_groups(
 __all__ = [
     "AdamW",
     "Muon",
+    "muon_update_scale",
     "OPTIMIZER_REGISTRY",
     "resolve_optimizer_cls",
     "build_optimizer_param_groups",

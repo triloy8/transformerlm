@@ -4,6 +4,8 @@ max_learning_rate = 0.018
 min_learning_rate = 0.0018
 momentum = 0.92
 weight_decay = 0.01
+# original: KellerJordan Muon scaling; match_rms_adamw: Moonshot/PyTorch AdamW-RMS matched scaling.
+adjust_lr_fn = "original"
 
 [optimizer.muon.head]
 initial_learning_rate = 0.003 # unused in cosine scheduler

@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 ALLOWED_DTYPES = {"float32", "float16", "bfloat16"}
 ALLOWED_DEVICES = {"cpu", "cuda"}
 ALLOWED_OPTIMIZERS = {"adamw", "muon"}
+ALLOWED_MUON_ADJUST_LR_FNS = {"original", "match_rms_adamw", "spectral_unclamped"}
 ALLOWED_ATTENTION_BACKENDS = {"custom", "torch_sdpa"}
 ALLOWED_SDP_BACKENDS = {"auto", "flash", "mem_efficient", "math"}
 ALLOWED_AMP_DTYPES = {"float16", "bfloat16"}
@@ -23,14 +24,20 @@ class MuonHiddenConfig(_BaseConfig):
     min_learning_rate: float = 0.05
     momentum: float = 0.95
     weight_decay: float = 0.0
+    adjust_lr_fn: str = "original"
 
     @model_validator(mode="after")
     def _validate_hidden(self):
+        self.adjust_lr_fn = self.adjust_lr_fn.lower()
         self._check_lr_range("muon.hidden")
         if not (0 < self.momentum < 1):
             raise ValueError("muon.hidden.momentum must be in (0, 1)")
         if self.weight_decay < 0:
             raise ValueError("muon.hidden.weight_decay must be >= 0")
+        if self.adjust_lr_fn not in ALLOWED_MUON_ADJUST_LR_FNS:
+            raise ValueError(
+                f"muon.hidden.adjust_lr_fn must be one of {sorted(ALLOWED_MUON_ADJUST_LR_FNS)}"
+            )
         return self
 
     def _check_lr_range(self, label: str):
