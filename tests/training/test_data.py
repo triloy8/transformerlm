@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from leash.objectives.data import get_batch
+from leash.objectives.data import get_batch, get_uniform_state_diffusion_batch
 
 
 class DummyBatcher:
@@ -100,3 +100,26 @@ def test_get_batch_applies_attention_and_loss_masks(device):
     assert torch.equal(batch.attention_mask, batch.loss_mask)
     assert torch.all(batch.mask <= batch.attention_mask)
     assert batch.metadata["token_count"] == int(batch.attention_mask.sum().item())
+
+
+def test_uniform_state_diffusion_batch_uses_vocab_states(device):
+    arr = np.arange(100, dtype=np.int32) % 8
+    generator = torch.Generator(device="cpu").manual_seed(7)
+    batcher = DummyBatcher(arr)
+
+    batch = get_uniform_state_diffusion_batch(
+        batcher,
+        batch_size=2,
+        context_length=8,
+        device=str(device),
+        vocab_size=8,
+        noise_epsilon=0.1,
+        random_trunc_prob=0.0,
+        p_mask_override=1.0,
+        generator=generator,
+    )
+
+    assert batch.noisy_inputs.min().item() >= 0
+    assert batch.noisy_inputs.max().item() < 8
+    assert torch.all(batch.mask)
+    assert not torch.equal(batch.noisy_inputs, batch.clean_targets)

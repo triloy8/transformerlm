@@ -1,6 +1,11 @@
 import torch
 
-from leash.inference.generate import diffusion_generate, image_diffusion_generate, categorical_flow_image_generate
+from leash.inference.generate import (
+    categorical_flow_image_generate,
+    diffusion_generate,
+    image_diffusion_generate,
+    uniform_state_diffusion_generate,
+)
 from leash.inference.sampling import compute_transfer_schedule, add_gumbel_noise
 
 
@@ -87,6 +92,28 @@ def test_diffusion_generate_fills_mask_tokens():
     # Prompt should stay intact
     assert torch.equal(output[:, : prompt.shape[1]], prompt)
     # Newly generated tokens should equal target token from dummy model
+    assert torch.all(output[:, prompt.shape[1]:] == 3)
+
+
+def test_uniform_state_diffusion_generate_fills_generated_tokens():
+    device = torch.device("cpu")
+    vocab_size = 6
+    context_length = 8
+    prompt = torch.tensor([[1, 2]], device=device)
+    model = DummyModel(vocab_size=vocab_size, context_length=context_length, target_token=3).to(device)
+
+    output = uniform_state_diffusion_generate(
+        model,
+        prompt,
+        vocab_size=vocab_size,
+        steps=4,
+        gen_length=4,
+        block_length=2,
+        temperature=0.0,
+    )
+
+    assert output.shape == (1, 6)
+    assert torch.equal(output[:, : prompt.shape[1]], prompt)
     assert torch.all(output[:, prompt.shape[1]:] == 3)
 
 

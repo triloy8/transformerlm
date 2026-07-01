@@ -1,6 +1,11 @@
 import torch
 
-from leash.objectives.loss import cross_entropy, diffusion_cross_entropy, mntp_cross_entropy
+from leash.objectives.loss import (
+    cross_entropy,
+    diffusion_cross_entropy,
+    mntp_cross_entropy,
+    unweighted_diffusion_cross_entropy,
+)
 
 
 def test_diffusion_cross_entropy_matches_weighted_average():
@@ -28,6 +33,33 @@ def test_diffusion_cross_entropy_ignores_unmasked_tokens():
     value = diffusion_cross_entropy(logits, targets, mask, p_mask)
     ce = cross_entropy(logits, targets, reduction="none")[0, 0]
     expected = (ce / p_mask[0, 0]) / (targets.numel())
+    assert torch.allclose(value, expected)
+
+
+def test_unweighted_diffusion_cross_entropy_averages_masked_tokens_only():
+    logits = torch.log(torch.tensor([
+        [[0.6, 0.4], [0.1, 0.9], [0.25, 0.75]],
+    ], dtype=torch.float32))
+    targets = torch.tensor([[0, 1, 1]])
+    mask = torch.tensor([[True, False, True]])
+
+    value = unweighted_diffusion_cross_entropy(logits, targets, mask)
+    ce = cross_entropy(logits, targets, reduction="none")
+    expected = (ce[0, 0] + ce[0, 2]) / 2
+    assert torch.allclose(value, expected)
+
+
+def test_unweighted_diffusion_cross_entropy_respects_loss_mask():
+    logits = torch.log(torch.tensor([
+        [[0.6, 0.4], [0.1, 0.9], [0.25, 0.75]],
+    ], dtype=torch.float32))
+    targets = torch.tensor([[0, 1, 1]])
+    mask = torch.tensor([[True, True, True]])
+    loss_mask = torch.tensor([[True, False, True]])
+
+    value = unweighted_diffusion_cross_entropy(logits, targets, mask, loss_mask=loss_mask)
+    ce = cross_entropy(logits, targets, reduction="none")
+    expected = (ce[0, 0] + ce[0, 2]) / 2
     assert torch.allclose(value, expected)
 
 

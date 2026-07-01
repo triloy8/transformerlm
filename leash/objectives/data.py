@@ -292,6 +292,89 @@ def get_megadlm_diffusion_batch(
     )
 
 
+def get_uniform_state_diffusion_batch(
+    dataset,
+    batch_size: int,
+    context_length: int,
+    device: str,
+    *,
+    vocab_size: int,
+    noise_epsilon: float = 1e-3,
+    random_trunc_prob: float = 0.01,
+    p_mask_override: Optional[float] = None,
+    deterministic_mask: bool = False,
+    generator: torch.Generator | None = None,
+) -> DiffusionBatch:
+    if vocab_size <= 1:
+        raise ValueError("vocab_size must be > 1 for uniform-state diffusion")
+    clean_targets, attention_mask, random_trunc_applied, labels = _draw_clean_targets(
+        dataset,
+        batch_size,
+        context_length,
+        device,
+        random_trunc_prob=random_trunc_prob,
+        min_length=2,
+        generator=generator,
+    )
+    if clean_targets.min().item() < 0 or clean_targets.max().item() >= vocab_size:
+        raise ValueError("clean_targets must be in [0, vocab_size)")
+    device_obj = clean_targets.device
+    batch_size, seq_len = clean_targets.shape
+
+    if p_mask_override is not None:
+        p_mask = torch.full((batch_size, 1), float(p_mask_override), device=device_obj)
+    else:
+        t = _rand_uniform((batch_size,), device=device_obj, generator=generator)
+        p_mask = (1.0 - noise_epsilon) * t[:, None] + noise_epsilon
+
+    if deterministic_mask:
+        mask_len = (p_mask.view(-1) * seq_len).floor().to(torch.long)
+        positions = torch.arange(seq_len, device=device_obj)
+        mask = positions[None, :] < mask_len[:, None]
+    else:
+        mask_rand = _rand_uniform((batch_size, seq_len), device=device_obj, generator=generator)
+        mask = mask_rand < p_mask
+    if attention_mask is not None:
+        mask = mask & attention_mask
+
+    random_states = torch.randint(
+        low=0,
+        high=vocab_size,
+        size=clean_targets.shape,
+        device=device_obj,
+        generator=generator,
+    )
+    noisy_inputs = torch.where(mask, random_states, clean_targets)
+
+    loss_mask = attention_mask
+    token_count = int(loss_mask.sum().item()) if loss_mask is not None else int(clean_targets.numel())
+    metadata: Dict[str, Any] = {
+        "random_truncation_applied": random_trunc_applied,
+        "sequence_length": seq_len,
+        "mask_ratio": float(mask.float().mean().detach().cpu().item()),
+        "token_count": token_count,
+        "p_mask_stats": {
+            "mean": float(p_mask.mean().detach().cpu().item()),
+            "min": float(p_mask.min().detach().cpu().item()),
+            "max": float(p_mask.max().detach().cpu().item()),
+            "std": float(p_mask.std(unbiased=False).detach().cpu().item()),
+            "inv_mean": float((1.0 / p_mask).mean().detach().cpu().item()),
+            "inv_max": float((1.0 / p_mask).max().detach().cpu().item()),
+        },
+    }
+
+    return DiffusionBatch(
+        noisy_inputs=noisy_inputs,
+        clean_targets=clean_targets,
+        mask=mask,
+        p_mask=p_mask,
+        attention_mask=attention_mask,
+        loss_mask=loss_mask,
+        labels=labels,
+        metadata=metadata,
+    )
+
+
 def get_autoregressive_batch(
     dataset,
     batch_size: int,
@@ -582,6 +665,7 @@ __all__ = [
     "FlowMatchingBatch",
     "CategoricalFlowBatch",
     "get_batch",
+    "get_uniform_state_diffusion_batch",
     "get_autoregressive_batch",
     "get_joint_batch",
     "get_flow_matching_batch",

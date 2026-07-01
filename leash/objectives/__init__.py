@@ -1,7 +1,18 @@
 from leash.objectives.base import Objective
 from leash.objectives.data import DiffusionBatch, AutoregressiveBatch, CategoricalFlowBatch, get_batch, get_autoregressive_batch
-from leash.objectives.loss import cross_entropy, diffusion_cross_entropy, mntp_cross_entropy, autoregressive_cross_entropy
-from leash.objectives.diffusion import DiffusionObjective, FlowMatchingObjective, MegaDlmDiffusionObjective
+from leash.objectives.loss import (
+    autoregressive_cross_entropy,
+    cross_entropy,
+    diffusion_cross_entropy,
+    mntp_cross_entropy,
+    unweighted_diffusion_cross_entropy,
+)
+from leash.objectives.diffusion import (
+    DiffusionObjective,
+    FlowMatchingObjective,
+    MegaDlmDiffusionObjective,
+    UniformStateDiffusionObjective,
+)
 from leash.objectives.autoregressive import AutoregressiveObjective
 from leash.objectives.joint import JointDiffusionAutoregressiveObjective, JointMntpAutoregressiveObjective
 from leash.objectives.categorical_flow import CategoricalFlowObjective
@@ -12,6 +23,7 @@ __all__ = [
     "Objective",
     "DiffusionObjective",
     "MegaDlmDiffusionObjective",
+    "UniformStateDiffusionObjective",
     "FlowMatchingObjective",
     "AutoregressiveObjective",
     "JointDiffusionAutoregressiveObjective",
@@ -28,6 +40,7 @@ __all__ = [
     "get_autoregressive_batch",
     "cross_entropy",
     "diffusion_cross_entropy",
+    "unweighted_diffusion_cross_entropy",
     "mntp_cross_entropy",
     "autoregressive_cross_entropy",
 ]

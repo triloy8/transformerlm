@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Optional
 import torch
 
-from leash.inference.generate import autoregressive_generate, diffusion_generate, flow_image_generate
+from leash.inference.generate import (
+    autoregressive_generate,
+    diffusion_generate,
+    flow_image_generate,
+    uniform_state_diffusion_generate,
+)
 from leash.objectives.base import Objective
 from leash.objectives.data import (
     DiffusionBatch,
@@ -11,8 +16,9 @@ from leash.objectives.data import (
     get_batch,
     get_flow_matching_batch,
     get_megadlm_diffusion_batch,
+    get_uniform_state_diffusion_batch,
 )
-from leash.objectives.loss import cross_entropy, diffusion_cross_entropy
+from leash.objectives.loss import cross_entropy, diffusion_cross_entropy, unweighted_diffusion_cross_entropy
 from leash.objectives.schedule import resolve_scheduled_p_mask
 
 
@@ -20,7 +26,8 @@ class DiffusionObjective(Objective):
     def __init__(self, cfg, tokenizer) -> None:
         super().__init__("diffusion")
         self._tokenizer = tokenizer
-        self.mask_token_id = int(getattr(cfg, "mask_token_id", cfg.vocab_size - 1))
+        cfg_mask_token_id = getattr(cfg, "mask_token_id", None)
+        self.mask_token_id = int(cfg_mask_token_id) if cfg_mask_token_id is not None else int(cfg.vocab_size - 1)
         self.noise_epsilon = float(getattr(cfg, "noise_epsilon", 1e-3))
         self.random_trunc_prob = float(getattr(cfg, "random_trunc_prob", 0.01))
         self.p_mask_override = getattr(cfg, "p_mask_override", None)
@@ -276,6 +283,75 @@ class FlowMatchingObjective(Objective):
         )
 
 
+class UniformStateDiffusionObjective(DiffusionObjective):
+    def __init__(self, cfg, tokenizer) -> None:
+        super().__init__(cfg, tokenizer)
+        self.name = "uniform-state-diffusion"
+        self.vocab_size = int(getattr(cfg, "vocab_size"))
+
+    def get_batch(self, *, dataset, batch_size: int, context_length: int, device: str, generator=None):
+        batch = get_uniform_state_diffusion_batch(
+            dataset=dataset,
+            batch_size=batch_size,
+            context_length=context_length,
+            device=device,
+            vocab_size=self.vocab_size,
+            noise_epsilon=self.noise_epsilon,
+            random_trunc_prob=self.random_trunc_prob,
+            p_mask_override=self._scheduled_p_mask(),
+            deterministic_mask=self.deterministic_mask,
+            generator=generator,
+        )
+        labels = getattr(batch, "labels", None)
+        if labels is not None and self.uncond_label_dropout_prob > 0:
+            keep = torch.rand(
+                labels.shape,
+                device=labels.device,
+                generator=generator,
+            ) >= self.uncond_label_dropout_prob
+            null_labels = torch.full_like(labels, int(self.null_label_id))
+            batch.labels = torch.where(keep, labels, null_labels)
+        return batch
+
+    def compute_loss(self, logits: torch.Tensor, batch: DiffusionBatch) -> torch.Tensor:
+        return unweighted_diffusion_cross_entropy(
+            logits,
+            batch.clean_targets,
+            batch.mask,
+            loss_mask=batch.loss_mask,
+        )
+
+    def generate(self, model, prompt_indices: torch.Tensor, **kwargs) -> torch.Tensor:
+        generation_mode = str(kwargs.get("generation_mode", "diffusion")).lower()
+        if generation_mode == "ar":
+            return autoregressive_generate(
+                model,
+                prompt_indices,
+                gen_length=int(kwargs.get("gen_length", 0)),
+                temperature=float(kwargs.get("temperature", 0.0)),
+                top_p=kwargs.get("top_p"),
+                eos_token_id=kwargs.get("eos_token_id"),
+                logits_eos_inf=bool(kwargs.get("logits_eos_inf", False)),
+                generator=kwargs.get("generator"),
+            )
+        return uniform_state_diffusion_generate(
+            model,
+            prompt_indices,
+            vocab_size=self.vocab_size,
+            eos_token_id=kwargs.get("eos_token_id"),
+            steps=int(kwargs.get("steps", 0)),
+            gen_length=int(kwargs.get("gen_length", 0)),
+            block_length=int(kwargs.get("block_length", 0)),
+            temperature=float(kwargs.get("temperature", 0.0)),
+            top_p=kwargs.get("top_p"),
+            cfg_scale=float(kwargs.get("cfg_scale", 0.0)),
+            remasking=str(kwargs.get("remasking", "random")),
+            logits_eos_inf=bool(kwargs.get("logits_eos_inf", False)),
+            confidence_eos_eot_inf=bool(kwargs.get("confidence_eos_eot_inf", False)),
+            generator=kwargs.get("generator"),
+        )
+
+
 class MegaDlmDiffusionObjective(Objective):
     def __init__(self, cfg, tokenizer) -> None:
         super().__init__("megadlm-diffusion")
@@ -458,4 +534,4 @@ class MegaDlmDiffusionObjective(Objective):
         )
 
 
-__all__ = ["DiffusionObjective", "MegaDlmDiffusionObjective"]
+__all__ = ["DiffusionObjective", "MegaDlmDiffusionObjective", "UniformStateDiffusionObjective"]

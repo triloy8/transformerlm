@@ -5,7 +5,12 @@ from collections.abc import Callable
 from leash.objectives.autoregressive import AutoregressiveObjective
 from leash.objectives.base import Objective
 from leash.objectives.categorical_flow import CategoricalFlowObjective
-from leash.objectives.diffusion import DiffusionObjective, FlowMatchingObjective, MegaDlmDiffusionObjective
+from leash.objectives.diffusion import (
+    DiffusionObjective,
+    FlowMatchingObjective,
+    MegaDlmDiffusionObjective,
+    UniformStateDiffusionObjective,
+)
 from leash.objectives.joint import JointDiffusionAutoregressiveObjective, JointMntpAutoregressiveObjective
 
 ObjectiveFactory = Callable[[object, object], Objective]
@@ -14,6 +19,7 @@ _OBJECTIVE_FACTORIES: dict[str, ObjectiveFactory] = {
     "diffusion": DiffusionObjective,
     "ar": AutoregressiveObjective,
     "megadlm-diffusion": MegaDlmDiffusionObjective,
+    "uniform-state-diffusion": UniformStateDiffusionObjective,
     "flow": FlowMatchingObjective,
     "categorical-flow": CategoricalFlowObjective,
     "joint-diffusion-ar": JointDiffusionAutoregressiveObjective,

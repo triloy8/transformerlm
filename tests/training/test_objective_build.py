@@ -1,10 +1,15 @@
 from types import SimpleNamespace
 
+import torch
+
 from leash.objectives import (
+    DiffusionBatch,
     build_objective,
+    cross_entropy,
     JointMntpAutoregressiveObjective,
     FlowMatchingObjective,
     CategoricalFlowObjective,
+    UniformStateDiffusionObjective,
     get_objective_factory,
     list_objectives,
     register_objective,
@@ -73,9 +78,67 @@ def test_build_objective_categorical_flow():
     assert isinstance(objective, CategoricalFlowObjective)
 
 
+def test_build_objective_uniform_state_diffusion():
+    cfg = SimpleNamespace(
+        training_objective="uniform-state-diffusion",
+        vocab_size=32,
+        mask_token_id=None,
+        noise_epsilon=1e-3,
+        random_trunc_prob=0.0,
+        p_mask_override=None,
+        deterministic_mask=False,
+        max_train_iteration=10,
+        p_mask_schedule="none",
+        p_mask_start=None,
+        p_mask_end=None,
+        p_mask_schedule_start=0.0,
+        p_mask_schedule_end=1.0,
+    )
+    objective = build_objective(cfg, _DummyTokenizer())
+    assert isinstance(objective, UniformStateDiffusionObjective)
+
+
+def test_uniform_state_diffusion_objective_uses_unweighted_loss():
+    cfg = SimpleNamespace(
+        training_objective="uniform-state-diffusion",
+        vocab_size=2,
+        mask_token_id=None,
+        noise_epsilon=1e-3,
+        random_trunc_prob=0.0,
+        p_mask_override=None,
+        deterministic_mask=False,
+        max_train_iteration=10,
+        p_mask_schedule="none",
+        p_mask_start=None,
+        p_mask_end=None,
+        p_mask_schedule_start=0.0,
+        p_mask_schedule_end=1.0,
+    )
+    objective = build_objective(cfg, _DummyTokenizer())
+    logits = torch.log(torch.tensor([
+        [[0.7, 0.3], [0.2, 0.8]],
+    ], dtype=torch.float32))
+    targets = torch.tensor([[0, 1]])
+    mask = torch.tensor([[True, True]])
+    batch = DiffusionBatch(
+        noisy_inputs=targets,
+        clean_targets=targets,
+        mask=mask,
+        p_mask=torch.tensor([[0.25]]),
+        attention_mask=None,
+        loss_mask=None,
+        metadata={},
+    )
+
+    loss = objective.compute_loss(logits, batch)
+    expected = cross_entropy(logits, targets, reduction="none").mean()
+    assert torch.allclose(loss, expected)
+
+
 def test_objective_registry_lists_builtin_entries():
     names = list_objectives()
     assert "diffusion" in names
+    assert "uniform-state-diffusion" in names
     assert "joint-mntp-ar" in names
 
 

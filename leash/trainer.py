@@ -382,7 +382,8 @@ def train_ddp(
         temperature = float(getattr(train_infer_cfg, "temperature", 1.0)) if train_infer_cfg else 1.0
         base_seed = getattr(train_infer_cfg, "seed", None) if train_infer_cfg else None
         eos_token_id = getattr(cfg, "eot_token_id", None)
-        mask_id = int(getattr(cfg, "mask_token_id", cfg.vocab_size - 1))
+        cfg_mask_token_id = getattr(cfg, "mask_token_id", None)
+        mask_id = int(cfg_mask_token_id) if cfg_mask_token_id is not None else int(cfg.vocab_size - 1)
 
         autocast_ctx = torch.autocast("cuda", dtype=amp_torch_dtype) if use_amp else nullcontext()
         with torch.no_grad(), autocast_ctx:

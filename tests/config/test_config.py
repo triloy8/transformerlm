@@ -540,6 +540,16 @@ def test_train_config_accepts_joint_mntp_ar_objective(tmp_path: Path):
     assert cfg.training.objective == "joint-mntp-ar"
 
 
+def test_train_config_accepts_uniform_state_diffusion_objective(tmp_path: Path):
+    raw = tomllib.load((RESOURCE_ROOT / "train.toml").open("rb"))
+    patched = _patch_train_like(deepcopy(raw), tmp_path)
+    patched["model"].pop("mask_token_id", None)
+    patched["training"]["objective"] = "uniform-state-diffusion"
+    cfg = TrainConfig.model_validate(patched)
+    assert cfg.model.mask_token_id is None
+    assert cfg.training.objective == "uniform-state-diffusion"
+
+
 def test_train_config_accepts_flow_with_image_dit(tmp_path: Path):
     raw = tomllib.load((RESOURCE_ROOT / "train_mnist.toml").open("rb"))
     patched = deepcopy(raw)

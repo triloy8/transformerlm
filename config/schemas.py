@@ -332,6 +332,7 @@ class TrainingConfig(_BaseConfig):
         if self.objective not in {
             "diffusion",
             "megadlm-diffusion",
+            "uniform-state-diffusion",
             "ar",
             "joint-diffusion-ar",
             "joint-mntp-ar",
@@ -339,7 +340,7 @@ class TrainingConfig(_BaseConfig):
             "categorical-flow",
         }:
             raise ValueError(
-                "objective must be one of: diffusion, megadlm-diffusion, ar, joint-diffusion-ar, joint-mntp-ar, flow, categorical-flow"
+                "objective must be one of: diffusion, megadlm-diffusion, uniform-state-diffusion, ar, joint-diffusion-ar, joint-mntp-ar, flow, categorical-flow"
             )
         if not (0 <= self.joint_diffusion_alpha <= 1):
             raise ValueError("joint_diffusion_alpha must be in [0, 1]")

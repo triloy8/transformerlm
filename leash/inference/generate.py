@@ -194,6 +194,179 @@ def diffusion_generate(
 
 
 @torch.no_grad()
+def uniform_state_diffusion_generate(
+    model,
+    prompt_indices: torch.Tensor,
+    *,
+    vocab_size: int | None = None,
+    eos_token_id: int | None = None,
+    steps: int,
+    gen_length: int,
+    block_length: int,
+    temperature: float = 0.0,
+    top_p: float | None = None,
+    cfg_scale: float = 0.0,
+    remasking: str = "random",
+    logits_eos_inf: bool = False,
+    confidence_eos_eot_inf: bool = False,
+    context: torch.Tensor | None = None,
+    generator: torch.Generator | None = None,
+) -> torch.Tensor:
+    """Generate by iteratively denoising uniformly sampled token states."""
+
+    if prompt_indices.dim() != 2:
+        raise ValueError("prompt_indices must be 2D (batch, seq)")
+    if block_length <= 0:
+        raise ValueError("block_length must be > 0")
+    if steps <= 0:
+        raise ValueError("steps must be > 0")
+    if gen_length <= 0:
+        return prompt_indices
+
+    vocab_size = int(vocab_size if vocab_size is not None else getattr(model, "vocab_size", 0))
+    if vocab_size <= 1:
+        raise ValueError("vocab_size must be > 1 for uniform_state_diffusion_generate")
+
+    blocks = max(1, math.ceil(gen_length / block_length))
+    if steps < blocks:
+        raise ValueError("steps must be >= number of blocks")
+    base_steps = steps // blocks
+    extra_steps = steps % blocks
+
+    device = prompt_indices.device
+    batch_size, prompt_len = prompt_indices.shape
+    total_len = prompt_len + gen_length
+
+    context_limit = getattr(model, "context_length", None)
+    if context_limit is not None and total_len > int(context_limit):
+        raise ValueError("prompt length + gen_length exceeds model context_length")
+
+    x = torch.randint(
+        low=0,
+        high=vocab_size,
+        size=(batch_size, total_len),
+        device=device,
+        dtype=prompt_indices.dtype,
+        generator=generator,
+    )
+    x[:, :prompt_len] = prompt_indices
+    fixed = torch.zeros((batch_size, total_len), device=device, dtype=torch.bool)
+    fixed[:, :prompt_len] = True
+
+    try:
+        from tqdm import tqdm
+    except Exception as exc:  # pragma: no cover - import-only path
+        raise RuntimeError("tqdm is required for uniform_state_diffusion_generate") from exc
+    pbar = tqdm(total=steps, desc="uniform_state_diffusion_generate", leave=False)
+
+    for block_idx in range(blocks):
+        block_start = prompt_len + block_idx * block_length
+        block_end = min(block_start + block_length, total_len)
+        block_steps = base_steps + (1 if block_idx < extra_steps else 0)
+        if block_steps <= 0:
+            block_steps = 1
+        block_mask = torch.ones((batch_size, block_end - block_start), device=device, dtype=torch.bool)
+        transfer_counts = compute_transfer_schedule(block_mask, block_steps)
+
+        for step_idx in range(block_steps):
+            mutable = ~fixed
+            if cfg_scale > 0.0:
+                un_x = x.clone()
+                un_x[:, :prompt_len] = torch.randint(
+                    low=0,
+                    high=vocab_size,
+                    size=(batch_size, prompt_len),
+                    device=device,
+                    dtype=prompt_indices.dtype,
+                    generator=generator,
+                )
+                if context is not None:
+                    ctx = torch.cat([context, context], dim=0)
+                    logits = model(torch.cat([x, un_x], dim=0), context=ctx)
+                else:
+                    logits = model(torch.cat([x, un_x], dim=0))
+                logits, un_logits = torch.chunk(logits, 2, dim=0)
+                logits = un_logits + (cfg_scale + 1.0) * (logits - un_logits)
+            else:
+                if context is not None:
+                    logits = model(x, context=context)
+                else:
+                    logits = model(x)
+
+            if logits_eos_inf and eos_token_id is not None:
+                logits[:, :, eos_token_id] = float("-inf")
+
+            if top_p is not None:
+                probs = softmax(logits, dim=-1)
+                probs = top_p_filter(probs, float(top_p))
+                logits = torch.where(
+                    probs > 0,
+                    logits,
+                    torch.full_like(logits, float("-inf")),
+                )
+
+            logits_with_noise = add_gumbel_noise(logits, temperature, generator=generator)
+            predictions = torch.argmax(logits_with_noise, dim=-1)
+
+            if remasking == "low_confidence":
+                probs = softmax(logits, dim=-1)
+                confidence = torch.squeeze(
+                    torch.gather(probs, dim=-1, index=torch.unsqueeze(predictions, -1)),
+                    -1,
+                )
+            elif remasking == "random":
+                confidence = torch.rand(
+                    (batch_size, total_len),
+                    device=device,
+                    dtype=torch.float32,
+                    generator=generator,
+                )
+            else:
+                raise ValueError(f"Unsupported remasking strategy: {remasking}")
+
+            if confidence_eos_eot_inf and eos_token_id is not None:
+                confidence = torch.where(
+                    predictions == eos_token_id,
+                    torch.full_like(confidence, float("-inf")),
+                    confidence,
+                )
+
+            confidence[:, block_end:] = float("-inf")
+            confidence = torch.where(mutable, confidence, torch.full_like(confidence, float("-inf")))
+
+            transfer_mask = torch.zeros_like(fixed)
+            for b in range(batch_size):
+                k = int(transfer_counts[b, step_idx].item())
+                if k <= 0:
+                    continue
+                available = confidence[b] > float("-inf")
+                available_count = int(available.sum().item())
+                if available_count <= 0:
+                    continue
+                if available_count < k:
+                    k = available_count
+                topk_indices = torch.topk(confidence[b], k=k, dim=-1).indices
+                transfer_mask[b, topk_indices] = True
+
+            fixed = fixed | transfer_mask
+            random_states = torch.randint(
+                low=0,
+                high=vocab_size,
+                size=x.shape,
+                device=device,
+                dtype=x.dtype,
+                generator=generator,
+            )
+            x = torch.where(transfer_mask, predictions, x)
+            x = torch.where(~fixed, random_states, x)
+            x[:, :prompt_len] = prompt_indices
+            pbar.update(1)
+
+    pbar.close()
+    return x
+
+
+@torch.no_grad()
 def image_diffusion_generate(
     model,
     prompt_indices: torch.Tensor,
@@ -546,6 +719,7 @@ generate = diffusion_generate
 
 __all__ = [
     "diffusion_generate",
+    "uniform_state_diffusion_generate",
     "image_diffusion_generate",
     "autoregressive_generate",
     "categorical_flow_image_generate",
