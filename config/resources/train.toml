@@ -1,5 +1,5 @@
 [model]
-vocab_size = 4097
+vocab_size = 4096
 context_length = 2048
 d_model = 512
 num_layers = 12
@@ -10,7 +10,7 @@ attention_backend = "torch_sdpa"
 attention_sdp_backend = "auto"
 device = "cuda"
 dtype = "float32"
-mask_token_id = 4096
+# mask_token_id = 4096 # reserved only for mask-token diffusion objectives
 eot_token_id = 4095
 noise_epsilon = 0.001
 random_trunc_prob = 0.0
@@ -73,20 +73,20 @@ grad_accum_steps = 1
 train_loss_ema_decay = 0.99
 amp_enabled = true
 amp_dtype = "bfloat16"
-objective = "megadlm-diffusion" # diffusion/megadlm-diffusion/ar/joint-diffusion-ar
+objective = "uniform-state-diffusion" # diffusion/megadlm-diffusion/uniform-state-diffusion/ar/joint-diffusion-ar
 joint_diffusion_alpha = 0.30      # diffusion weight alpha (AR weight = 1-alpha)
 joint_diffusion_alpha_end = 0.45  # increase diffusion weight later in training
 joint_alpha_schedule = "linear"   # constant/linear/cosine
 joint_alpha_schedule_start = 0.10 # normalized progress
 joint_alpha_schedule_end = 0.70   # normalized progress
-p_mask_schedule = "none"          # MegaDLM samples p_mask uniformly per row
+p_mask_schedule = "none"          # uniform-state diffusion samples p_mask uniformly per row
 # p_mask_start = 0.30
 # p_mask_end = 0.85
 # p_mask_schedule_start = 0.0
 # p_mask_schedule_end = 1.0
 eot_mask_loss = false
 # repeat_masking_seed = 3407
-# p_mask_override = 0.3
+# p_mask_override = 0.5
 # deterministic_mask = false
 
 [compile]
@@ -147,7 +147,7 @@ seed = 3410
 
 [wandb]
 entity = "yiltro8-org"
-project = "megadlm_diffusion_simplestories_4k_2048"
+project = "uniform_state_diffusion_simplestories_4k_2048"
 
 [ddp]
 backend = "nccl"               # gloo/nccl
