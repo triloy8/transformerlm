@@ -36,17 +36,27 @@ def _apply_overrides(base: dict, overrides: dict) -> dict:
                 cursor = cursor[part]
     return base
 
+
+def _expand_sweep_overrides(overrides: dict) -> dict:
+    expanded = dict(overrides)
+    shared_muon_max_lr = expanded.pop("optimizer.muon.max_learning_rate", None)
+    if shared_muon_max_lr is not None:
+        for group in ("hidden", "head", "embed", "scalar"):
+            expanded.setdefault(f"optimizer.muon.{group}.max_learning_rate", shared_muon_max_lr)
+    return expanded
+
+
 def _apply_lr_constraints(base: dict, overrides: dict) -> dict:
-    ratios = {
-        "hidden": 0.1,
-        "head": 0.1,
-        "embed": 0.1,
-        "scalar": 0.05,
+    muon_lr_ratios = {
+        "hidden": {"initial": 0.1, "min": 0.01},
+        "head": {"initial": 0.1, "min": 0.01},
+        "embed": {"initial": 0.1, "min": 0.01},
+        "scalar": {"initial": 0.1, "min": 0.01},
     }
     optimizer = base.get("optimizer", {})
     optimizer_name = optimizer.get("optimizer_name")
     muon = optimizer.get("muon", {})
-    for group, ratio in ratios.items():
+    for group, ratios in muon_lr_ratios.items():
         max_key = f"optimizer.muon.{group}.max_learning_rate"
         min_key = f"optimizer.muon.{group}.min_learning_rate"
         init_key = f"optimizer.muon.{group}.initial_learning_rate"
@@ -56,10 +66,11 @@ def _apply_lr_constraints(base: dict, overrides: dict) -> dict:
             except (TypeError, ValueError):
                 continue
             if isinstance(muon, dict) and group in muon:
+                group_cfg = muon[group]
                 if min_key not in overrides:
-                    muon[group]["min_learning_rate"] = max_val * ratio
+                    group_cfg["min_learning_rate"] = max_val * ratios["min"]
                 if init_key not in overrides:
-                    muon[group]["initial_learning_rate"] = max_val
+                    group_cfg["initial_learning_rate"] = max_val * ratios["initial"]
     if optimizer_name == "adamw":
         adamw_max_key = "optimizer.max_learning_rate"
         if adamw_max_key in overrides:
@@ -94,8 +105,9 @@ def main():
         run = wandb.init()
         overrides = dict(run.config)
         run.finish()
-    cfg_dict = _apply_overrides(asdict_pretty(cfg_dc), overrides)
-    cfg_dict = _apply_lr_constraints(cfg_dict, overrides)
+    overrides = _expand_sweep_overrides(overrides)
+    cfg_dict = _apply_lr_constraints(asdict_pretty(cfg_dc), overrides)
+    cfg_dict = _apply_overrides(cfg_dict, overrides)
     cfg_dc = TrainConfig.model_validate(cfg_dict)
 
     ns = build_train_namespace(cfg_dc, str(args_cfg.config))
