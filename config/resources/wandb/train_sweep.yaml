@@ -1,5 +1,5 @@
 program: cli/sweep_train.py
-project: diffusion_adamw_lr_simplestories_6
+project: sweep_uniform_state_diffusion_simplestories_4k_2048
 command:
   - ${env}
   - uv
@@ -7,7 +7,7 @@ command:
   - transformerlm-sweep-train
   - --config
   - config/resources/train.toml
-method: bayes
+method: grid
 metric:
   goal: minimize
   name: metrics.val_loss
@@ -18,7 +18,10 @@ parameters:
     value: 100
   checkpointing.ckpting_save_iter:
     value: 2000
-  optimizer.max_learning_rate:
-    distribution: log_uniform_values
-    min: 0.0001
-    max: 0.001
+  optimizer.muon.max_learning_rate:
+    values:
+      - 0.0003
+      - 0.00045
+      - 0.00068
+      - 0.001
+      - 0.0015
