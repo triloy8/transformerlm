@@ -73,7 +73,7 @@ grad_accum_steps = 1
 train_loss_ema_decay = 0.99
 amp_enabled = true
 amp_dtype = "bfloat16"
-objective = "uniform-state-diffusion" # diffusion/megadlm-diffusion/uniform-state-diffusion/sumi-uniform-gidd-diffusion/ar/joint-diffusion-ar
+objective = "sumi-uniform-gidd-diffusion" # diffusion/megadlm-diffusion/uniform-state-diffusion/sumi-uniform-gidd-diffusion/ar/joint-diffusion-ar
 joint_diffusion_alpha = 0.30      # diffusion weight alpha (AR weight = 1-alpha)
 joint_diffusion_alpha_end = 0.45  # increase diffusion weight later in training
 joint_alpha_schedule = "linear"   # constant/linear/cosine
@@ -88,10 +88,10 @@ eot_mask_loss = false
 # repeat_masking_seed = 3407
 # p_mask_override = 0.5
 # deterministic_mask = false
-# sumi_gidd_beta_is = 1.0              # Itakura-Saito term weight for sumi-uniform-gidd-diffusion
-# sumi_gidd_z_loss_strength = 1e-5     # set to 0.0 to disable logsumexp(logits)^2 stability loss
-# sumi_gidd_loss_eps = 1e-12           # numerical clamp for logs and ratios
-# sumi_gidd_loss_mask_mode = "valid"   # valid/noised; Sumi-style training uses valid
+sumi_gidd_beta_is = 1.0              # Itakura-Saito term weight for sumi-uniform-gidd-diffusion
+sumi_gidd_z_loss_strength = 1e-5     # set to 0.0 to disable logsumexp(logits)^2 stability loss
+sumi_gidd_loss_eps = 1e-12           # numerical clamp for logs and ratios
+sumi_gidd_loss_mask_mode = "valid"   # valid/noised; Sumi-style training uses valid
 
 [compile]
 enabled = true
