@@ -151,7 +151,7 @@ seed = 3410
 
 [wandb]
 entity = "yiltro8-org"
-project = "uniform_state_diffusion_simplestories_4k_2048"
+project = "sumi_uniform_gidd_diffusion_simplestories_4k_2048"
 
 [ddp]
 backend = "nccl"               # gloo/nccl
