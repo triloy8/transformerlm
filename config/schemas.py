@@ -311,6 +311,10 @@ class TrainingConfig(_BaseConfig):
     categorical_flow_inf_weight: float = 1.0
     categorical_flow_ec_weight: float = 1.0
     categorical_flow_td_weight: float = 1.0
+    sumi_gidd_beta_is: float = 1.0
+    sumi_gidd_z_loss_strength: Optional[float] = 1e-5
+    sumi_gidd_loss_eps: float = 1e-12
+    sumi_gidd_loss_mask_mode: str = "valid"
 
     @model_validator(mode="after")
     def _validate_training(self):
@@ -333,6 +337,7 @@ class TrainingConfig(_BaseConfig):
             "diffusion",
             "megadlm-diffusion",
             "uniform-state-diffusion",
+            "sumi-uniform-gidd-diffusion",
             "ar",
             "joint-diffusion-ar",
             "joint-mntp-ar",
@@ -340,7 +345,7 @@ class TrainingConfig(_BaseConfig):
             "categorical-flow",
         }:
             raise ValueError(
-                "objective must be one of: diffusion, megadlm-diffusion, uniform-state-diffusion, ar, joint-diffusion-ar, joint-mntp-ar, flow, categorical-flow"
+                "objective must be one of: diffusion, megadlm-diffusion, uniform-state-diffusion, sumi-uniform-gidd-diffusion, ar, joint-diffusion-ar, joint-mntp-ar, flow, categorical-flow"
             )
         if not (0 <= self.joint_diffusion_alpha <= 1):
             raise ValueError("joint_diffusion_alpha must be in [0, 1]")
@@ -387,6 +392,15 @@ class TrainingConfig(_BaseConfig):
             raise ValueError("categorical_flow_ec_weight must be >= 0")
         if self.categorical_flow_td_weight < 0:
             raise ValueError("categorical_flow_td_weight must be >= 0")
+        if self.sumi_gidd_beta_is < 0:
+            raise ValueError("sumi_gidd_beta_is must be >= 0")
+        if self.sumi_gidd_z_loss_strength is not None and self.sumi_gidd_z_loss_strength < 0:
+            raise ValueError("sumi_gidd_z_loss_strength must be >= 0 when provided")
+        if self.sumi_gidd_loss_eps <= 0:
+            raise ValueError("sumi_gidd_loss_eps must be > 0")
+        self.sumi_gidd_loss_mask_mode = self.sumi_gidd_loss_mask_mode.lower()
+        if self.sumi_gidd_loss_mask_mode not in {"valid", "noised"}:
+            raise ValueError("sumi_gidd_loss_mask_mode must be one of: valid, noised")
         return self
 
 

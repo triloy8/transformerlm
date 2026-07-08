@@ -9,6 +9,7 @@ from leash.objectives.diffusion import (
     DiffusionObjective,
     FlowMatchingObjective,
     MegaDlmDiffusionObjective,
+    SumiUniformGiddDiffusionObjective,
     UniformStateDiffusionObjective,
 )
 from leash.objectives.joint import JointDiffusionAutoregressiveObjective, JointMntpAutoregressiveObjective
@@ -20,6 +21,7 @@ _OBJECTIVE_FACTORIES: dict[str, ObjectiveFactory] = {
     "ar": AutoregressiveObjective,
     "megadlm-diffusion": MegaDlmDiffusionObjective,
     "uniform-state-diffusion": UniformStateDiffusionObjective,
+    "sumi-uniform-gidd-diffusion": SumiUniformGiddDiffusionObjective,
     "flow": FlowMatchingObjective,
     "categorical-flow": CategoricalFlowObjective,
     "joint-diffusion-ar": JointDiffusionAutoregressiveObjective,

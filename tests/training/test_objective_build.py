@@ -9,8 +9,10 @@ from leash.objectives import (
     JointMntpAutoregressiveObjective,
     FlowMatchingObjective,
     CategoricalFlowObjective,
+    SumiUniformGiddDiffusionObjective,
     UniformStateDiffusionObjective,
     get_objective_factory,
+    uniform_gidd_loss,
     list_objectives,
     register_objective,
 )
@@ -98,6 +100,81 @@ def test_build_objective_uniform_state_diffusion():
     assert isinstance(objective, UniformStateDiffusionObjective)
 
 
+def test_build_objective_sumi_uniform_gidd_diffusion():
+    cfg = SimpleNamespace(
+        training_objective="sumi-uniform-gidd-diffusion",
+        vocab_size=32,
+        mask_token_id=None,
+        noise_epsilon=1e-3,
+        random_trunc_prob=0.0,
+        p_mask_override=None,
+        deterministic_mask=False,
+        max_train_iteration=10,
+        p_mask_schedule="none",
+        p_mask_start=None,
+        p_mask_end=None,
+        p_mask_schedule_start=0.0,
+        p_mask_schedule_end=1.0,
+        sumi_gidd_beta_is=0.5,
+        sumi_gidd_z_loss_strength=0.0,
+        sumi_gidd_loss_eps=1e-10,
+        sumi_gidd_loss_mask_mode="valid",
+    )
+    objective = build_objective(cfg, _DummyTokenizer())
+    assert isinstance(objective, SumiUniformGiddDiffusionObjective)
+
+
+def test_sumi_uniform_gidd_diffusion_objective_uses_gidd_loss():
+    cfg = SimpleNamespace(
+        training_objective="sumi-uniform-gidd-diffusion",
+        vocab_size=3,
+        mask_token_id=None,
+        noise_epsilon=1e-3,
+        random_trunc_prob=0.0,
+        p_mask_override=None,
+        deterministic_mask=False,
+        max_train_iteration=10,
+        p_mask_schedule="none",
+        p_mask_start=None,
+        p_mask_end=None,
+        p_mask_schedule_start=0.0,
+        p_mask_schedule_end=1.0,
+        sumi_gidd_beta_is=0.7,
+        sumi_gidd_z_loss_strength=0.0,
+        sumi_gidd_loss_eps=1e-12,
+        sumi_gidd_loss_mask_mode="valid",
+    )
+    objective = build_objective(cfg, _DummyTokenizer())
+    logits = torch.tensor([
+        [[1.0, -0.5, 0.25], [0.1, 0.3, -0.2]],
+    ])
+    noisy = torch.tensor([[0, 2]])
+    targets = torch.tensor([[0, 1]])
+    t = torch.tensor([0.4])
+    batch = DiffusionBatch(
+        noisy_inputs=noisy,
+        clean_targets=targets,
+        mask=torch.tensor([[False, True]]),
+        p_mask=t[:, None],
+        attention_mask=None,
+        loss_mask=None,
+        metadata={},
+        timesteps=t,
+    )
+
+    loss = objective.compute_loss(logits, batch)
+    expected = uniform_gidd_loss(
+        logits,
+        noisy,
+        targets,
+        t,
+        vocab_size=3,
+        beta_is=0.7,
+        z_loss_strength=0.0,
+    )
+    assert torch.allclose(loss, expected)
+
+
 def test_uniform_state_diffusion_objective_uses_unweighted_loss():
     cfg = SimpleNamespace(
         training_objective="uniform-state-diffusion",
@@ -139,6 +216,7 @@ def test_objective_registry_lists_builtin_entries():
     names = list_objectives()
     assert "diffusion" in names
     assert "uniform-state-diffusion" in names
+    assert "sumi-uniform-gidd-diffusion" in names
     assert "joint-mntp-ar" in names
 
 

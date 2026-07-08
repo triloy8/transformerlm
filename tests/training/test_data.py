@@ -123,3 +123,5 @@ def test_uniform_state_diffusion_batch_uses_vocab_states(device):
     assert batch.noisy_inputs.max().item() < 8
     assert torch.all(batch.mask)
     assert not torch.equal(batch.noisy_inputs, batch.clean_targets)
+    assert batch.timesteps is not None
+    assert torch.allclose(batch.timesteps, torch.ones_like(batch.timesteps))

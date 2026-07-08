@@ -5,12 +5,14 @@ from leash.objectives.loss import (
     cross_entropy,
     diffusion_cross_entropy,
     mntp_cross_entropy,
+    uniform_gidd_loss,
     unweighted_diffusion_cross_entropy,
 )
 from leash.objectives.diffusion import (
     DiffusionObjective,
     FlowMatchingObjective,
     MegaDlmDiffusionObjective,
+    SumiUniformGiddDiffusionObjective,
     UniformStateDiffusionObjective,
 )
 from leash.objectives.autoregressive import AutoregressiveObjective
@@ -23,6 +25,7 @@ __all__ = [
     "Objective",
     "DiffusionObjective",
     "MegaDlmDiffusionObjective",
+    "SumiUniformGiddDiffusionObjective",
     "UniformStateDiffusionObjective",
     "FlowMatchingObjective",
     "AutoregressiveObjective",
@@ -41,6 +44,7 @@ __all__ = [
     "cross_entropy",
     "diffusion_cross_entropy",
     "unweighted_diffusion_cross_entropy",
+    "uniform_gidd_loss",
     "mntp_cross_entropy",
     "autoregressive_cross_entropy",
 ]

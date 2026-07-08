@@ -18,7 +18,7 @@ from leash.objectives.data import (
     get_megadlm_diffusion_batch,
     get_uniform_state_diffusion_batch,
 )
-from leash.objectives.loss import cross_entropy, diffusion_cross_entropy, unweighted_diffusion_cross_entropy
+from leash.objectives.loss import cross_entropy, diffusion_cross_entropy, uniform_gidd_loss, unweighted_diffusion_cross_entropy
 from leash.objectives.schedule import resolve_scheduled_p_mask
 
 
@@ -349,6 +349,44 @@ class UniformStateDiffusionObjective(DiffusionObjective):
             logits_eos_inf=bool(kwargs.get("logits_eos_inf", False)),
             confidence_eos_eot_inf=bool(kwargs.get("confidence_eos_eot_inf", False)),
             generator=kwargs.get("generator"),
+        )
+
+
+class SumiUniformGiddDiffusionObjective(UniformStateDiffusionObjective):
+    def __init__(self, cfg, tokenizer) -> None:
+        super().__init__(cfg, tokenizer)
+        self.name = "sumi-uniform-gidd-diffusion"
+        self.beta_is = float(getattr(cfg, "sumi_gidd_beta_is", 1.0))
+        self.z_loss_strength = getattr(cfg, "sumi_gidd_z_loss_strength", 1e-5)
+        if self.z_loss_strength is not None:
+            self.z_loss_strength = float(self.z_loss_strength)
+        self.loss_eps = float(getattr(cfg, "sumi_gidd_loss_eps", 1e-12))
+        self.loss_mask_mode = str(getattr(cfg, "sumi_gidd_loss_mask_mode", "valid")).lower()
+        if self.beta_is < 0:
+            raise ValueError("sumi_gidd_beta_is must be >= 0")
+        if self.z_loss_strength is not None and self.z_loss_strength < 0:
+            raise ValueError("sumi_gidd_z_loss_strength must be >= 0 when provided")
+        if self.loss_eps <= 0:
+            raise ValueError("sumi_gidd_loss_eps must be > 0")
+        if self.loss_mask_mode not in {"valid", "noised"}:
+            raise ValueError("sumi_gidd_loss_mask_mode must be one of: valid, noised")
+
+    def compute_loss(self, logits: torch.Tensor, batch: DiffusionBatch) -> torch.Tensor:
+        t = getattr(batch, "timesteps", None)
+        if t is None:
+            t = batch.p_mask.squeeze(1)
+        reduction_mask = batch.mask if self.loss_mask_mode == "noised" else None
+        return uniform_gidd_loss(
+            logits,
+            batch.noisy_inputs,
+            batch.clean_targets,
+            t,
+            vocab_size=self.vocab_size,
+            beta_is=self.beta_is,
+            z_loss_strength=self.z_loss_strength,
+            loss_mask=batch.loss_mask,
+            reduction_mask=reduction_mask,
+            eps=self.loss_eps,
         )
 
 

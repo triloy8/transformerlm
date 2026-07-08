@@ -550,6 +550,22 @@ def test_train_config_accepts_uniform_state_diffusion_objective(tmp_path: Path):
     assert cfg.training.objective == "uniform-state-diffusion"
 
 
+def test_train_config_accepts_sumi_uniform_gidd_diffusion_objective(tmp_path: Path):
+    raw = tomllib.load((RESOURCE_ROOT / "train.toml").open("rb"))
+    patched = _patch_train_like(deepcopy(raw), tmp_path)
+    patched["model"].pop("mask_token_id", None)
+    patched["training"]["objective"] = "sumi-uniform-gidd-diffusion"
+    patched["training"]["sumi_gidd_beta_is"] = 0.75
+    patched["training"]["sumi_gidd_z_loss_strength"] = 0.0
+    patched["training"]["sumi_gidd_loss_eps"] = 1e-10
+    patched["training"]["sumi_gidd_loss_mask_mode"] = "noised"
+    cfg = TrainConfig.model_validate(patched)
+    assert cfg.model.mask_token_id is None
+    assert cfg.training.objective == "sumi-uniform-gidd-diffusion"
+    assert cfg.training.sumi_gidd_beta_is == 0.75
+    assert cfg.training.sumi_gidd_loss_mask_mode == "noised"
+
+
 def test_train_config_accepts_flow_with_image_dit(tmp_path: Path):
     raw = tomllib.load((RESOURCE_ROOT / "train_mnist.toml").open("rb"))
     patched = deepcopy(raw)

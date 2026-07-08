@@ -16,6 +16,7 @@ class DiffusionBatch:
     loss_mask: torch.Tensor | None
     metadata: Dict[str, Any]
     labels: torch.Tensor | None = None
+    timesteps: torch.Tensor | None = None
 
 
 @dataclass
@@ -147,6 +148,7 @@ def get_batch(
     else:
         t = _rand_uniform((batch_size,), device=device_obj, generator=generator)
         p_mask = (1.0 - noise_epsilon) * t[:, None] + noise_epsilon
+    timesteps = p_mask.squeeze(1)
 
     if deterministic_mask:
         mask_len = (p_mask.view(-1) * seq_len).floor().to(torch.long)
@@ -186,6 +188,7 @@ def get_batch(
         attention_mask=attention_mask,
         loss_mask=loss_mask,
         labels=labels,
+        timesteps=timesteps,
         metadata=metadata,
     )
 
@@ -253,6 +256,7 @@ def get_megadlm_diffusion_batch(
         denom = torch.full((batch_size,), float(seq_len), device=device_obj)
     p_mask = (mask.to(torch.float32).sum(dim=1) / denom).clamp_min(1.0 / max(seq_len, 1))
     p_mask = p_mask[:, None]
+    timesteps = p_mask.squeeze(1)
 
     mask_token_tensor = torch.full_like(clean_targets, fill_value=mask_token_id)
     noisy_inputs = torch.where(mask, mask_token_tensor, clean_targets)
@@ -288,6 +292,7 @@ def get_megadlm_diffusion_batch(
         attention_mask=attention_mask,
         loss_mask=loss_mask,
         labels=labels,
+        timesteps=timesteps,
         metadata=metadata,
     )
 
@@ -326,6 +331,7 @@ def get_uniform_state_diffusion_batch(
     else:
         t = _rand_uniform((batch_size,), device=device_obj, generator=generator)
         p_mask = (1.0 - noise_epsilon) * t[:, None] + noise_epsilon
+    timesteps = p_mask.squeeze(1)
 
     if deterministic_mask:
         mask_len = (p_mask.view(-1) * seq_len).floor().to(torch.long)
@@ -371,6 +377,7 @@ def get_uniform_state_diffusion_batch(
         attention_mask=attention_mask,
         loss_mask=loss_mask,
         labels=labels,
+        timesteps=timesteps,
         metadata=metadata,
     )
 
@@ -477,6 +484,7 @@ def get_joint_batch(
         attention_mask=attention_mask,
         loss_mask=diff_loss_mask,
         labels=labels,
+        timesteps=timesteps,
         metadata={
             "random_truncation_applied": random_trunc_applied,
             "sequence_length": seq_len,

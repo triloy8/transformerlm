@@ -88,6 +88,10 @@ def build_train_namespace(cfg_dc, config_path: str) -> argparse.Namespace:
         p_mask_override=getattr(cfg_dc.training, "p_mask_override", None),
         deterministic_mask=bool(getattr(cfg_dc.training, "deterministic_mask", False)),
         uncond_label_dropout_prob=float(getattr(cfg_dc.training, "uncond_label_dropout_prob", 0.0)),
+        sumi_gidd_beta_is=float(getattr(cfg_dc.training, "sumi_gidd_beta_is", 1.0)),
+        sumi_gidd_z_loss_strength=getattr(cfg_dc.training, "sumi_gidd_z_loss_strength", 1e-5),
+        sumi_gidd_loss_eps=float(getattr(cfg_dc.training, "sumi_gidd_loss_eps", 1e-12)),
+        sumi_gidd_loss_mask_mode=str(getattr(cfg_dc.training, "sumi_gidd_loss_mask_mode", "valid")),
         # compile
         compile_enabled=bool(getattr(cfg_dc.compile, "enabled", False)) if cfg_dc.compile else False,
         compile_backend=getattr(cfg_dc.compile, "backend", "inductor") if cfg_dc.compile else "inductor",
